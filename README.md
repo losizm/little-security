@@ -2,7 +2,7 @@
 
 The Scala library that adds a little security to applications.
 
-[![Maven Central](https://img.shields.io/maven-central/v/com.github.losizm/little-security.12.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22com.github.losizm%22%20AND%20a:%22little-security.12%22)
+[![Maven Central](https://img.shields.io/maven-central/v/com.github.losizm/little-security_2.13.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22com.github.losizm%22%20AND%20a:%22little-security.12%22)
 
 ## Getting Started
 To use **little-security**, start by adding it to your project.
