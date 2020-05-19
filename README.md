@@ -4,8 +4,23 @@ The Scala library that adds a little security to applications.
 
 [![Maven Central](https://img.shields.io/maven-central/v/com.github.losizm/little-security_2.13.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22com.github.losizm%22%20AND%20a:%22little-security.12%22)
 
+## Table of Contents
+- [Getting Started](#Getting-Started)
+- [How It Works](#How-It-Works)
+  - [Security in Action](#Security-in-Action)
+- [Permission](#Permission)
+  - [User and Group Permissions](#User-and-Group-Permissions)
+- [Security Context](#Security-Context)
+  - [Granting Any or All Permissions](#Granting-Any-or-All-Permissions)
+  - [Testing Permissions](#Testing-Permissions)
+  - [Automatic User and Group Permissions](#Automatic-User-and-Group-Permissions)
+  - [The Omnipotent Root Security](#The-Omnipotent-Root-Security)
+- [API Documentation](#API-Documentation)
+- [License](#License)
+
+
 ## Getting Started
-To use **little-security**, start by adding it to your project.
+To use **little-security**, add it to your project's library dependencies.
 
 ```scala
 libraryDependencies += "com.github.losizm" %% "little-security" % "0.1.0"
@@ -16,17 +31,18 @@ libraryDependencies += "com.github.losizm" %% "little-security" % "0.1.0"
 **little-security** is powered by a pair of traits: `Permission` and
 `SecurityContext`.
 
-A `Permission` is defined by a given name, and one or more permissions can be
+A `Permission` is defined with a given name, and one or more permissions can be
 applied to a restricted operation.
 
 A `SecurityContext` establishes a pattern in which a restricted operation is
 performed only if its required permissions are granted. Otherwise, a
 `SecurityViolation` is raised.
 
-## Security in Action
+### Security in Action
 
-The following script provides an example of how read/write access to an
-in-memory cache can be regulated.
+The following script demonstrates how read/write access to an in-memory cache
+could be regulated. We won't discuss any of its details: It's provided merely to
+highlight a simple use case. See inline comments for notable bits of code.
 
 ```scala
 import little.security.{ Permission, SecurityContext, UserSecurity }
@@ -60,7 +76,7 @@ object SecureCache {
 }
 
 // Create security context for user with read permission to cache
-implicit val user = UserSecurity("guest", "staff", Permission("cache:get"))
+implicit val user = UserSecurity("losizm", "staff", Permission("cache:get"))
 
 // Get cache entry
 val data = SecureCache.get("gang starr")
@@ -69,17 +85,156 @@ val data = SecureCache.get("gang starr")
 SecureCache.set("sucker mc", data)
 ```
 
-## Testing Permissions
+## Permission
 
-At times, it may be enough to simply check a permission to see whether it is
+A `Permission` is identified by its name, and you're free to implement any
+convention for the names used in your application.
+
+The following defines 3 permissions, any of which could be used as a
+permission for read access to an archive module.
+
+```scala
+val perm1 = Permission("archive:read")
+val perm2 = Permission("module=archive; access=read")
+val perm3 = Permission("[[read]] /api/modules/archive")
+```
+
+### User and Group Permissions
+
+Although their usage is not mandated, utilities are provided for creating user
+and group permissions.
+
+A user permission is created with `UserPermission`. There's no implementing
+class: It's just a factory. It constructs a permission with a specially
+formatted name using user and group identiers.
+
+```scala
+val userPermission = UserPermission("losizm", "staff")
+
+// Destructure permission to its user and group identifiers
+userPermission match {
+  case UserPermission(uid, gid) => println(s"userId=$uid, groupId=$gid")
+}
+```
+
+And `GroupPermission` constructs a permission with a specially formatted name
+using a group identifier only.
+
+```scala
+val groupPermission = GroupPermission("staff")
+
+// Destructure permission to its group identifier
+groupPermission match {
+  case GroupPermission(gid) => println(s"groupId=$gid")
+}
+```
+
+See also [Automatic User and Group Permissions](#Automatic-User-and-Group-Permissions).
+
+## Security Context
+
+A `SecurityContext` is consulted for permission to apply a restricted operation.
+If permission is granted, the operation is applied; otherwise, the security
+context raises a `SecurityViolation`.
+
+`UserSecurity` is an implementation of a security context. It is constructed
+with supplied user and group identifiers along with a set of granted
+permissions.
+
+```scala
+import little.security.{ Permission, SecurityContext, UserSecurity }
+
+object BuildManager {
+  private val buildPermission      = Permission("action=build")
+  private val deployDevPermission  = Permission("action=deploy; env=dev")
+  private val deployProdPermission = Permission("action=deploy; env=prod")
+
+  def build(project: String)(implicit security: SecurityContext): Unit =
+    // Check permission before performing action
+    security(buildPermission) { () =>
+      println(s"Building $project...")
+    }
+
+  def deployToDev(project: String)(implicit security: SecurityContext): Unit =
+    // Check permission before performing action
+    security(deployDevPermission) { () =>
+      println(s"Deploying $project to development environment...")
+    }
+
+  def deployToProd(project: String)(implicit security: SecurityContext): Unit =
+    // Check permission before performing action
+    security(deployProdPermission) { () =>
+      println(s"Deploying $project to production environment...")
+    }
+}
+
+// Create user security with two permissions
+implicit val user = UserSecurity("ishmael", "developer",
+  Permission("action=build"),
+  Permission("action=deploy; env=dev")
+)
+
+// Permission granted to build
+BuildManager.build("my-favorite-app")
+
+// Permission granted to deploy to dev
+BuildManager.deployToDev("my-favorite-app")
+
+// Permission not granted to deploy to prod -- throw SecurityViolation
+BuildManager.deployToProd("my-favorite-app")
+```
+
+### Granting Any or All Permissions
+
+`SecurityContext.forAny(Permission*)` is used to ensure that at least one of the
+supplied permissions is granted before an operation is applied.
+
+`SecurityContext.forAll(Permission*)` is used to ensure that all supplied permissions
+are granted before an operation is applied.
+
+```scala
+import little.security.{ Permission, SecurityContext, UserSecurity }
+
+object FileManager {
+  private val readOnlyPermission  = Permission("file:read-only")
+  private val readWritePermission = Permission("file:read-write")
+  private val encryptPermission   = Permission("file:encrypt")
+
+  def read(fileName: String)(implicit security: SecurityContext): Unit =
+    // Get either read-only or read-write permission before performing operation
+    security.forAny(readOnlyPermission, readWritePermission) { () =>
+      println(s"Reading $fileName...")
+    }
+
+  def encrypt(fileName: String)(implicit security: SecurityContext): Unit =
+    // Get both read-write and encrypt permissions before performing operation
+    security.forAll(readWritePermission, encryptPermission) { () =>
+      println(s"Encrypting $fileName...")
+    }
+}
+
+implicit val user = UserSecurity("isaac", "ops", Permission("file:read-write"))
+
+// Can read via read-write permission
+FileManager.read("/etc/passwd")
+
+// Has read-write but lacks encrypt permission -- throw SecurityViolation
+FileManager.encrypt("/etc/passwd")
+```
+
+### Testing Permissions
+
+Sometimes, it may be enough to simply check a permission to see whether it is
 granted, and not necessarily throw a `SecurityViolation` if it isn't. That's
 precisely what `SecurityContext.test(Permission)` is for. It returns `true` or
 `false` based on the permission being granted or not. It's an ideal predicate to
 a security filter, as demonstrated in the following script.
 
 ```scala
+import little.security.{ Permission, SecurityContext, UserSecurity }
+
 object SecureMessages {
-  // Define class to encapsulate text message and assigned permission
+  // Define class to pair text message with assigned permission
   private case class Message(text: String, permission: Permission)
 
   private val messages = Seq(
@@ -96,8 +251,8 @@ object SecureMessages {
       .map(_.text)
 }
 
-// Create user with "public" and "protected" permissions.
-implicit val user = UserSecurity("guest", "staff",
+// Create user with "public" and "protected" permissions
+implicit val user = UserSecurity("losizm", "staff",
   Permission("public"),
   Permission("protected")
 )
@@ -106,46 +261,77 @@ implicit val user = UserSecurity("guest", "staff",
 SecureMessages.list.foreach(println)
 ```
 
-## User and Group Permissions
-
-A permission is defined by its name, and you're free to implement any convention
-for the names used in your application. However, there are two notable
-exceptions, which are related to how the names of user and group permissions are
-created.
-
-A user permission is created with `UserPermission`. There's no implementing
-class; it's just a factory. It constructs a permission with a specially
-formatted name using user and group identiers.
-
-```scala
-val userPermission = UserPermission("guest", "staff")
-```
-
-And `GroupPermission` constructs a permission with a specially formatted name
-using a group identifier only.
-
-```scala
-val groupPermission = GroupPermission("staff")
-```
+### Automatic User and Group Permissions
 
 When an instance of `UserSecurity` is created, user and group permissions are
-appended to the permissions expressly supplied in the constructor.
+added to the permissions expressly supplied in constructor.
 
 ```scala
-val user = UserSecurity("guest", "staff", Permission("filesystem:read"))
+val user = UserSecurity("losizm", "staff", Permission("read"))
 
-assert(user.test(Permission("filesystem:read")))
-assert(user.test(UserPermission("guest", "staff")))
+assert(user.test(Permission("read")))
+assert(user.test(UserPermission("losizm", "staff")))
 assert(user.test(GroupPermission("staff")))
 ```
 
-## The Omnipotent RootSecurity
+You're not required to make use of these permissions. However, they are added as
+convenience for possible use cases such as document sharing.
+
+For example, if a user owns a document, she should have read/write access to
+that document. And, if it's shared, then read-only access could be given to her
+group.
+
+```scala
+import little.security._
+
+import scala.collection.concurrent.TrieMap
+
+case class DocumentStore(userId: String, groupId: String) {
+  private case class Document(text: String, permission: Permission)
+
+  private val userPermission  = UserPermission(userId, groupId)
+  private val groupPermission = GroupPermission(groupId)
+  private val storage         = new TrieMap[String, Document]
+
+  def get(name: String)(implicit security: SecurityContext): String =
+    storage.get(name).map { doc =>
+      // If shared, then the user and anyone in her group can read it
+      // If not shared, then only the user can read it
+      security(doc.permission) { () => doc.text }
+    }.get
+
+  def put(name: String, text: String, shared: Boolean)
+      (implicit security: SecurityContext): Unit =
+    // Only the user can write to her document store
+    security(userPermission) { () =>
+      shared match {
+        // If shared, store with group permission
+        case true  => storage += name -> Document(text, groupPermission)
+        // If not shared, store with user permission
+        case false => storage += name -> Document(text, userPermission)
+      }
+    }
+}
+
+// Create security context with user and group permissions only
+implicit val user = UserSecurity("lupita", "finance")
+
+val docs = DocumentStore(user.userId, user.groupId)
+
+// Owner can always read and write to document store
+docs.put("meeting-agenda.txt", "Be on time.", true)
+docs.get("meeting-agenda.txt")
+docs.put("pto.txt", "2020-03-01 - On holiday", false)
+```
+
+### The Omnipotent Root Security
 
 In the examples so far, we've used `UserSecurity`, which is a security context
 with a finite set of granted permissions.
 
-The only other type is `RootSecurity`, which grants all permissions. That is,
-there's no permission it doesn't have. It's the _superuser_ security context.
+The other type of security context is `RootSecurity`, which has an infinite set
+of granted permissions. That is, there's no permission it doesn't have. It's the
+_superuser_ security context.
 
 `RootSecurity` is an object implementation, so there's only one instance of it.
 It should be used for the purpose of effectively bypassing security checks.
