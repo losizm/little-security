@@ -1,0 +1,80 @@
+<!DOCTYPE html ><html><head><meta http-equiv="X-UA-Compatible" content="IE=edge"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/><title></title><meta content="" name="description"/><meta content="" name="keywords"/><meta http-equiv="content-type" content="text/html; charset=UTF-8"/><link href="../lib/index.css" media="screen" type="text/css" rel="stylesheet"/><link href="../lib/template.css" media="screen" type="text/css" rel="stylesheet"/><link href="../lib/print.css" media="print" type="text/css" rel="stylesheet"/><link href="../lib/diagrams.css" media="screen" type="text/css" rel="stylesheet" id="diagrams-css"/><script type="text/javascript" src="../lib/jquery.min.js"></script><script type="text/javascript" src="../lib/index.js"></script><script type="text/javascript" src="../index.js"></script><script type="text/javascript" src="../lib/scheduler.js"></script><script type="text/javascript" src="../lib/template.js"></script><script type="text/javascript">/* this variable can be used by the JS to determine the path to the root document */
+var toRoot = '../';</script></head><body><div id="search"><span id="doc-title"><span id="doc-version"></span></span> <span class="close-results"><span class="left">&lt;</span> Back</span><div id="textfilter"><span class="input"><input autocapitalize="none" placeholder="Search" id="index-input" type="text" accesskey="/"/><i class="clear material-icons"></i><i id="search-icon" class="material-icons"></i></span></div></div><div id="search-results"><div id="search-progress"><div id="progress-fill"></div></div><div id="results-content"><div id="entity-results"></div><div id="member-results"></div></div></div><div id="content-scroll-container" style="-webkit-overflow-scrolling: touch;"><div id="content-container" style="-webkit-overflow-scrolling: touch;"><div id="subpackage-spacer"><div id="packages"><h1>Packages</h1><ul><li class="indented0 " name="_root_.root" group="Ungrouped" fullComment="yes" data-isabs="false" visbl="pub"><a id="_root_"></a><a id="root:_root_"></a> <span class="permalink"><a href="../index.html" title="Permalink"><i class="material-icons"></i></a></span> <span class="modifier_kind"><span class="modifier"></span> <span class="kind">package</span></span> <span class="symbol"><a href="../index.html" title=""><span class="name">root</span></a></span><div class="fullcomment"><dl class="attributes block"><dt>Definition Classes</dt><dd><a href="../index.html" name="_root_" id="_root_" class="extype">root</a></dd></dl></div></li><li class="indented1 current" name="_root_.little" group="Ungrouped" fullComment="yes" data-isabs="false" visbl="pub"><a id="little"></a><a id="little:little"></a> <span class="permalink"><a href="../little/index.html" title="Permalink"><i class="material-icons"></i></a></span> <span class="modifier_kind"><span class="modifier"></span> <span class="kind">package</span></span> <span class="symbol"><span class="name">little</span></span><div class="fullcomment"><dl class="attributes block"><dt>Definition Classes</dt><dd><a href="../index.html" name="_root_" id="_root_" class="extype">root</a></dd></dl></div></li><li class="indented2 " name="little.security" group="Ungrouped" fullComment="yes" data-isabs="false" visbl="pub"><a id="security"></a><a id="security:security"></a> <span class="permalink"><a href="../little/security/index.html" title="Permalink"><i class="material-icons"></i></a></span> <span class="modifier_kind"><span class="modifier"></span> <span class="kind">package</span></span> <span class="symbol"><a href="security/index.html" title="Defines security model based on permissions granted to effective context."><span class="name">security</span></a></span><p class="shortcomment cmt">Defines security model based on permissions granted to effective context.</p><div class="fullcomment"><div class="comment cmt"><p>Defines security model based on permissions granted to effective context.</p><h4> How It Works </h4><p> <b>little-security</b> is powered by a pair of traits: <a href="security/Permission.html" name="little.security.Permission" id="little.security.Permission" class="extype">Permission</a> and
+<a href="security/SecurityContext.html" name="little.security.SecurityContext" id="little.security.SecurityContext" class="extype">SecurityContext</a>.</p><p>A <code>Permission</code> is defined with a given name, and one or more permissions can
+be applied to a restricted operation.</p><p>A <code>SecurityContext</code> establishes a pattern in which a restricted operation is
+performed only if its required permissions are granted. Otherwise, a
+<a href="security/SecurityViolation.html" name="little.security.SecurityViolation" id="little.security.SecurityViolation" class="extype">SecurityViolation</a> is raised.</p><h4> Security in Action </h4><p>The following script provides an example of how read/write access to an
+in-memory cache could be implemented.</p><pre><span class="kw">import</span> little.security.{ Permission, SecurityContext, UserSecurity }
+
+<span class="kw">import</span> scala.collection.concurrent.TrieMap
+
+<span class="kw">object</span> SecureCache {
+  <span class="cmt">// Define permissions for reading and writing cache entries</span>
+  <span class="kw">private</span> <span class="kw">val</span> getPermission = Permission(<span class="lit">"cache:get"</span>)
+  <span class="kw">private</span> <span class="kw">val</span> setPermission = Permission(<span class="lit">"cache:set"</span>)
+
+  <span class="kw">private</span> <span class="kw">val</span> cache = TrieMap[<span class="std">String</span>, <span class="std">String</span>](
+    <span class="lit">"gang starr"</span>      -&gt; <span class="lit">"step in the arena"</span>,
+    <span class="lit">"digable planets"</span> -&gt; <span class="lit">"blowout comb"</span>
+  )
+
+  <span class="kw">def</span> get(key: <span class="std">String</span>)(<span class="kw">implicit</span> security: SecurityContext): <span class="std">String</span> =
+    <span class="cmt">// Tests for read permission before getting cache entry</span>
+    security(getPermission) { () <span class="kw">=&gt;</span>
+      cache(key)
+    }
+
+  <span class="kw">def</span> set(key: <span class="std">String</span>, value: <span class="std">String</span>)(<span class="kw">implicit</span> security: SecurityContext): <span class="std">Unit</span> =
+    <span class="cmt">// Tests for write permission before setting cache entry</span>
+    security(setPermission) { () <span class="kw">=&gt;</span>
+      cache += key -&gt; value
+    }
+}
+
+<span class="cmt">// Create security context for user with read permission to cache</span>
+<span class="kw">implicit</span> <span class="kw">val</span> user = UserSecurity(<span class="lit">"losizm"</span>, <span class="lit">"staff"</span>, Permission(<span class="lit">"cache:get"</span>))
+
+<span class="cmt">// Get cache entry</span>
+<span class="kw">val</span> value = SecureCache.get(<span class="lit">"gang starr"</span>)
+
+<span class="cmt">// Throw SecurityViolation because user lacks write permission</span>
+SecureCache.set(<span class="lit">"sucker mc"</span>, value)</pre></div></div></li></ul></div></div><div id="content"><body class="package value"><div id="definition"><div class="big-circle package">p</div><h1>little<span class="permalink"><a href="../little/index.html" title="Permalink"><i class="material-icons"></i></a></span></h1></div><h4 id="signature" class="signature"><span class="modifier_kind"><span class="modifier"></span> <span class="kind">package</span></span> <span class="symbol"><span class="name">little</span></span></h4><div id="comment" class="fullcommenttop"></div><div id="template"><div id="allMembers"><div id="packages" class="package members"><h3>Package Members</h3><ol><li class="indented0 " name="little.security" group="Ungrouped" fullComment="yes" data-isabs="false" visbl="pub"><a id="security"></a><a id="security:security"></a> <span class="permalink"><a href="../little/security/index.html" title="Permalink"><i class="material-icons"></i></a></span> <span class="modifier_kind"><span class="modifier"></span> <span class="kind">package</span></span> <span class="symbol"><a href="security/index.html" title="Defines security model based on permissions granted to effective context."><span class="name">security</span></a></span><p class="shortcomment cmt">Defines security model based on permissions granted to effective context.</p><div class="fullcomment"><div class="comment cmt"><p>Defines security model based on permissions granted to effective context.</p><h4> How It Works </h4><p> <b>little-security</b> is powered by a pair of traits: <a href="security/Permission.html" name="little.security.Permission" id="little.security.Permission" class="extype">Permission</a> and
+<a href="security/SecurityContext.html" name="little.security.SecurityContext" id="little.security.SecurityContext" class="extype">SecurityContext</a>.</p><p>A <code>Permission</code> is defined with a given name, and one or more permissions can
+be applied to a restricted operation.</p><p>A <code>SecurityContext</code> establishes a pattern in which a restricted operation is
+performed only if its required permissions are granted. Otherwise, a
+<a href="security/SecurityViolation.html" name="little.security.SecurityViolation" id="little.security.SecurityViolation" class="extype">SecurityViolation</a> is raised.</p><h4> Security in Action </h4><p>The following script provides an example of how read/write access to an
+in-memory cache could be implemented.</p><pre><span class="kw">import</span> little.security.{ Permission, SecurityContext, UserSecurity }
+
+<span class="kw">import</span> scala.collection.concurrent.TrieMap
+
+<span class="kw">object</span> SecureCache {
+  <span class="cmt">// Define permissions for reading and writing cache entries</span>
+  <span class="kw">private</span> <span class="kw">val</span> getPermission = Permission(<span class="lit">"cache:get"</span>)
+  <span class="kw">private</span> <span class="kw">val</span> setPermission = Permission(<span class="lit">"cache:set"</span>)
+
+  <span class="kw">private</span> <span class="kw">val</span> cache = TrieMap[<span class="std">String</span>, <span class="std">String</span>](
+    <span class="lit">"gang starr"</span>      -&gt; <span class="lit">"step in the arena"</span>,
+    <span class="lit">"digable planets"</span> -&gt; <span class="lit">"blowout comb"</span>
+  )
+
+  <span class="kw">def</span> get(key: <span class="std">String</span>)(<span class="kw">implicit</span> security: SecurityContext): <span class="std">String</span> =
+    <span class="cmt">// Tests for read permission before getting cache entry</span>
+    security(getPermission) { () <span class="kw">=&gt;</span>
+      cache(key)
+    }
+
+  <span class="kw">def</span> set(key: <span class="std">String</span>, value: <span class="std">String</span>)(<span class="kw">implicit</span> security: SecurityContext): <span class="std">Unit</span> =
+    <span class="cmt">// Tests for write permission before setting cache entry</span>
+    security(setPermission) { () <span class="kw">=&gt;</span>
+      cache += key -&gt; value
+    }
+}
+
+<span class="cmt">// Create security context for user with read permission to cache</span>
+<span class="kw">implicit</span> <span class="kw">val</span> user = UserSecurity(<span class="lit">"losizm"</span>, <span class="lit">"staff"</span>, Permission(<span class="lit">"cache:get"</span>))
+
+<span class="cmt">// Get cache entry</span>
+<span class="kw">val</span> value = SecureCache.get(<span class="lit">"gang starr"</span>)
+
+<span class="cmt">// Throw SecurityViolation because user lacks write permission</span>
+SecureCache.set(<span class="lit">"sucker mc"</span>, value)</pre></div></div></li></ol></div></div><div id="inheritedMembers"></div><div id="groupedMembers"><div name="Ungrouped" class="group"><h3>Ungrouped</h3></div></div></div><div id="tooltip"></div><div id="footer"></div></body></div></div></div></body></html>
