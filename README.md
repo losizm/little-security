@@ -280,12 +280,13 @@ import little.security._
 
 import scala.collection.concurrent.TrieMap
 
-case class DocumentStore(userId: String, groupId: String) {
+class DocumentStore(userId: String, groupId: String) {
   private case class Document(text: String, permission: Permission)
 
   private val userPermission  = UserPermission(userId, groupId)
   private val groupPermission = GroupPermission(groupId)
-  private val storage         = new TrieMap[String, Document]
+
+  private val storage = new TrieMap[String, Document]
 
   def get(name: String)(implicit security: SecurityContext): String =
     storage.get(name).map { doc =>
@@ -311,7 +312,7 @@ case class DocumentStore(userId: String, groupId: String) {
 // Create security context with user and group permissions only
 implicit val user = UserSecurity("lupita", "finance")
 
-val docs = DocumentStore(user.userId, user.groupId)
+val docs = new DocumentStore(user.userId, user.groupId)
 
 // Owner can always read and write to document store
 docs.put("meeting-agenda.txt", "Be on time.", true)
