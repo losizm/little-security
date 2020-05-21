@@ -23,7 +23,7 @@ package little
  *  '''little-security''' is powered by a pair of traits: [[Permission]] and
  * [[SecurityContext]].
  * 
- * A `Permission` is defined by a given name, and one or more permissions can
+ * A `Permission` is defined with a given name, and one or more permissions can
  * be applied to a restricted operation.
  * 
  * A `SecurityContext` establishes a pattern in which a restricted operation is
@@ -33,9 +33,11 @@ package little
  * == Security in Action ==
  *
  * The following script provides an example of how read/write access to an
- * in-memory cache can be regulated.
+ * in-memory cache could be implemented.
  *
  * {{{
+ * import little.security.{ Permission, SecurityContext, UserSecurity }
+ *
  * import scala.collection.concurrent.TrieMap
  *
  * object SecureCache {
@@ -43,36 +45,32 @@ package little
  *   private val getPermission = Permission("cache:get")
  *   private val setPermission = Permission("cache:set")
  *
- *   private val cache = TrieMap[String, Array[Byte]](
- *     "gang starr"      -> "step in the arena".getBytes("utf-8"),
- *     "digable planets" -> "blowout comb".getBytes("utf-8")
+ *   private val cache = TrieMap[String, String](
+ *     "gang starr"      -> "step in the arena",
+ *     "digable planets" -> "blowout comb"
  *   )
  *
- *   def get(key: String)(implicit security: SecurityContext): Array[Byte] =
+ *   def get(key: String)(implicit security: SecurityContext): String =
  *     // Tests for read permission before getting cache entry
  *     security(getPermission) { () =>
- *       copy(cache(key))
+ *       cache(key)
  *     }
  *
- *   def set(key: String, data: Array[Byte])(implicit security: SecurityContext): Unit =
+ *   def set(key: String, value: String)(implicit security: SecurityContext): Unit =
  *     // Tests for write permission before setting cache entry
  *     security(setPermission) { () =>
- *       cache += key -> copy(data)
+ *       cache += key -> value
  *     }
- *
- *   private def copy(data: Array[Byte]): Array[Byte] =
- *     Array.copyOf(data, data.size)
  * }
  *
  * // Create security context for user with read permission to cache
- * implicit val user = UserSecurity("guest", "staff", Permission("cache:get"))
+ * implicit val user = UserSecurity("losizm", "staff", Permission("cache:get"))
  *
  * // Get cache entry
- * val data = SecureCache.get("gang starr")
+ * val value = SecureCache.get("gang starr")
  *
  * // Throw SecurityViolation because user lacks write permission
- * SecureCache.set("sucker mc", data)
- *
+ * SecureCache.set("sucker mc", value)
  * }}}
  */
 package object security

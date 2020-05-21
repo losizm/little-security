@@ -60,7 +60,7 @@ sealed trait SecurityContext {
    *
    * @note The operation is authorized if `perms` is empty.
    */
-  def forAny[T](perms: Set[Permission])(op: () => T): T =
+  def any[T](perms: Set[Permission])(op: () => T): T =
     (perms.isEmpty || perms.exists(test)) match {
       case true  => op()
       case false => throw SecurityViolation(s"No permission granted: ${perms.mkString(", ")}"
@@ -81,8 +81,8 @@ sealed trait SecurityContext {
    *
    * @throws SecurityViolation if no permission is granted
    */
-  def forAny[T](one: Permission, more: Permission*)(op: () => T): T =
-    forAny((one +: more).toSet)(op)
+  def any[T](one: Permission, more: Permission*)(op: () => T): T =
+    any((one +: more).toSet)(op)
 
   /**
    * Tests permissions before applying operation.
@@ -99,7 +99,7 @@ sealed trait SecurityContext {
    *
    * @note The operation is authorized if `perms` is empty.
    */
-  def forAll[T](perms: Set[Permission])(op: () => T): T =
+  def all[T](perms: Set[Permission])(op: () => T): T =
     perms.find(!test(_)) match {
       case Some(perm) => throw SecurityViolation(s"Permission not granted: $perm")
       case None       => op()
@@ -119,8 +119,8 @@ sealed trait SecurityContext {
    *
    * @throws SecurityViolation if all permissions are not granted
    */
-  def forAll[T](one: Permission, more: Permission*)(op: () => T): T =
-    forAll((one +: more).toSet)(op)
+  def all[T](one: Permission, more: Permission*)(op: () => T): T =
+    all((one +: more).toSet)(op)
 }
 
 /**

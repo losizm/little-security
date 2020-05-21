@@ -79,57 +79,57 @@ class SecurityContextSpec extends org.scalatest.flatspec.AnyFlatSpec {
   }
 
   it should "authorize operation for any permission" in {
-    assert { security.forAny(select, create, insert)(() => 1) == 1 }
-    assert { security.forAny(insert, select, create)(() => 1) == 1 }
-    assert { security.forAny(create, insert, select)(() => 1) == 1 }
+    assert { security.any(select, create, insert)(() => 1) == 1 }
+    assert { security.any(insert, select, create)(() => 1) == 1 }
+    assert { security.any(create, insert, select)(() => 1) == 1 }
 
-    assert { security.forAny(select, create, update)(() => 1) == 1 }
-    assert { security.forAny(update, select, create)(() => 1) == 1 }
-    assert { security.forAny(create, update, select)(() => 1) == 1 }
+    assert { security.any(select, create, update)(() => 1) == 1 }
+    assert { security.any(update, select, create)(() => 1) == 1 }
+    assert { security.any(create, update, select)(() => 1) == 1 }
 
-    assert { security.forAny(select, update)(() => 1) == 1 }
-    assert { security.forAny(update, select)(() => 1) == 1 }
+    assert { security.any(select, update)(() => 1) == 1 }
+    assert { security.any(update, select)(() => 1) == 1 }
 
-    assert { security.forAny(select)(() => 1) == 1 }
-    assert { security.forAny(update)(() => 1) == 1 }
+    assert { security.any(select)(() => 1) == 1 }
+    assert { security.any(update)(() => 1) == 1 }
 
-    assert { security.forAny(empty)(() => 1) == 1 }
+    assert { security.any(empty)(() => 1) == 1 }
   }
 
   it should "not authorize operation for any permission" in {
-    assertThrows[SecurityViolation] { security.forAny(insert, create, delete)(() => 1) }
-    assertThrows[SecurityViolation] { security.forAny(insert, create)(() => 1) }
-    assertThrows[SecurityViolation] { security.forAny(insert)(() => 1) }
-    assertThrows[SecurityViolation] { security.forAny(guest2, root, wheel)(() => 1) }
+    assertThrows[SecurityViolation] { security.any(insert, create, delete)(() => 1) }
+    assertThrows[SecurityViolation] { security.any(insert, create)(() => 1) }
+    assertThrows[SecurityViolation] { security.any(insert)(() => 1) }
+    assertThrows[SecurityViolation] { security.any(guest2, root, wheel)(() => 1) }
   }
 
   it should "authorize operation for all permission" in {
-    assert { security.forAll(select, update)(() => 1) == 1 }
-    assert { security.forAll(update, select)(() => 1) == 1 }
+    assert { security.all(select, update)(() => 1) == 1 }
+    assert { security.all(update, select)(() => 1) == 1 }
 
-    assert { security.forAll(update, select, update)(() => 1) == 1 }
+    assert { security.all(update, select, update)(() => 1) == 1 }
 
-    assert { security.forAll(select)(() => 1) == 1 }
-    assert { security.forAll(update)(() => 1) == 1 }
+    assert { security.all(select)(() => 1) == 1 }
+    assert { security.all(update)(() => 1) == 1 }
 
-    assert { security.forAll(empty)(() => 1) == 1 }
+    assert { security.all(empty)(() => 1) == 1 }
   }
 
   it should "not authorize operation for all permission" in {
-    assertThrows[SecurityViolation] { security.forAll(select, create, insert)(() => 1) }
-    assertThrows[SecurityViolation] { security.forAll(insert, select, create)(() => 1) }
-    assertThrows[SecurityViolation] { security.forAll(create, insert, select)(() => 1) }
+    assertThrows[SecurityViolation] { security.all(select, create, insert)(() => 1) }
+    assertThrows[SecurityViolation] { security.all(insert, select, create)(() => 1) }
+    assertThrows[SecurityViolation] { security.all(create, insert, select)(() => 1) }
 
-    assertThrows[SecurityViolation] { security.forAll(select, create, update)(() => 1) }
-    assertThrows[SecurityViolation] { security.forAll(update, select, create)(() => 1) }
-    assertThrows[SecurityViolation] { security.forAll(create, update, select)(() => 1) }
+    assertThrows[SecurityViolation] { security.all(select, create, update)(() => 1) }
+    assertThrows[SecurityViolation] { security.all(update, select, create)(() => 1) }
+    assertThrows[SecurityViolation] { security.all(create, update, select)(() => 1) }
 
-    assertThrows[SecurityViolation] { security.forAll(insert, update)(() => 1) }
-    assertThrows[SecurityViolation] { security.forAll(update, insert)(() => 1) }
-    assertThrows[SecurityViolation] { security.forAll(insert, select)(() => 1) }
-    assertThrows[SecurityViolation] { security.forAll(select, insert)(() => 1) }
+    assertThrows[SecurityViolation] { security.all(insert, update)(() => 1) }
+    assertThrows[SecurityViolation] { security.all(update, insert)(() => 1) }
+    assertThrows[SecurityViolation] { security.all(insert, select)(() => 1) }
+    assertThrows[SecurityViolation] { security.all(select, insert)(() => 1) }
 
-    assertThrows[SecurityViolation] { security.forAll(create)(() => 1) }
-    assertThrows[SecurityViolation] { security.forAll(insert)(() => 1) }
+    assertThrows[SecurityViolation] { security.all(create)(() => 1) }
+    assertThrows[SecurityViolation] { security.all(insert)(() => 1) }
   }
 }
