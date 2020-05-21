@@ -20,10 +20,10 @@ The Scala library that adds a little security to applications.
 
 
 ## Getting Started
-To use **little-security**, add it to your project's library dependencies.
+To use **little-security**, add it to your library dependencies.
 
 ```scala
-libraryDependencies += "com.github.losizm" %% "little-security" % "0.1.0"
+libraryDependencies += "com.github.losizm" %% "little-security" % "0.2.0"
 ```
 
 ## How It Works
@@ -41,8 +41,8 @@ performed only if its required permissions are granted. Otherwise, a
 ### Security in Action
 
 The following script demonstrates how read/write access to an in-memory cache
-could be regulated. We won't discuss any of its details: It's provided merely to
-highlight a simple use case. See inline comments for notable bits of code.
+could be implemented. We won't discuss any of its details: It's provided merely
+to highlight a simple use case. See inline comments for notable bits of code.
 
 ```scala
 import little.security.{ Permission, SecurityContext, UserSecurity }
@@ -54,35 +54,32 @@ object SecureCache {
   private val getPermission = Permission("cache:get")
   private val setPermission = Permission("cache:set")
 
-  private val cache = TrieMap[String, Array[Byte]](
-    "gang starr"      -> "step in the arena".getBytes("utf-8"),
-    "digable planets" -> "blowout comb".getBytes("utf-8")
+  private val cache = TrieMap[String, String](
+    "gang starr"      -> "step in the arena",
+    "digable planets" -> "blowout comb"
   )
 
-  def get(key: String)(implicit security: SecurityContext): Array[Byte] =
+  def get(key: String)(implicit security: SecurityContext): String =
     // Tests for read permission before getting cache entry
     security(getPermission) { () =>
-      copy(cache(key))
+      cache(key)
     }
 
-  def set(key: String, data: Array[Byte])(implicit security: SecurityContext): Unit =
+  def set(key: String, value: String)(implicit security: SecurityContext): Unit =
     // Tests for write permission before setting cache entry
     security(setPermission) { () =>
-      cache += key -> copy(data)
+      cache += key -> value
     }
-
-  private def copy(data: Array[Byte]): Array[Byte] =
-    Array.copyOf(data, data.size)
 }
 
 // Create security context for user with read permission to cache
 implicit val user = UserSecurity("losizm", "staff", Permission("cache:get"))
 
 // Get cache entry
-val data = SecureCache.get("gang starr")
+val value = SecureCache.get("gang starr")
 
 // Throw SecurityViolation because user lacks write permission
-SecureCache.set("sucker mc", data)
+SecureCache.set("sucker mc", value)
 ```
 
 ## Permission
@@ -100,9 +97,6 @@ val perm3 = Permission("[[read]] /api/modules/archive")
 ```
 
 ### User and Group Permissions
-
-Although their usage is not mandated, utilities are provided for creating user
-and group permissions.
 
 A user permission is created with `UserPermission`. There's no implementing
 class: It's just a factory. It constructs a permission with a specially
@@ -152,19 +146,19 @@ object BuildManager {
   def build(project: String)(implicit security: SecurityContext): Unit =
     // Check permission before performing action
     security(buildPermission) { () =>
-      println(s"Building $project...")
+      println(s"Build $project.")
     }
 
   def deployToDev(project: String)(implicit security: SecurityContext): Unit =
     // Check permission before performing action
     security(deployDevPermission) { () =>
-      println(s"Deploying $project to development environment...")
+      println(s"Deploy $project to dev environment.")
     }
 
   def deployToProd(project: String)(implicit security: SecurityContext): Unit =
     // Check permission before performing action
     security(deployProdPermission) { () =>
-      println(s"Deploying $project to production environment...")
+      println(s"Deploy $project to prod environment.")
     }
 }
 
@@ -186,11 +180,11 @@ BuildManager.deployToProd("my-favorite-app")
 
 ### Granting Any or All Permissions
 
-`SecurityContext.forAny(Permission*)` is used to ensure that at least one of the
+`SecurityContext.any(Permission*)` is used to ensure that at least one of the
 supplied permissions is granted before an operation is applied.
 
-`SecurityContext.forAll(Permission*)` is used to ensure that all supplied permissions
-are granted before an operation is applied.
+`SecurityContext.all(Permission*)` is used to ensure that all supplied
+permissions are granted before an operation is applied.
 
 ```scala
 import little.security.{ Permission, SecurityContext, UserSecurity }
@@ -202,14 +196,14 @@ object FileManager {
 
   def read(fileName: String)(implicit security: SecurityContext): Unit =
     // Get either read-only or read-write permission before performing operation
-    security.forAny(readOnlyPermission, readWritePermission) { () =>
-      println(s"Reading $fileName...")
+    security.any(readOnlyPermission, readWritePermission) { () =>
+      println(s"Read $fileName.")
     }
 
   def encrypt(fileName: String)(implicit security: SecurityContext): Unit =
     // Get both read-write and encrypt permissions before performing operation
-    security.forAll(readWritePermission, encryptPermission) { () =>
-      println(s"Encrypting $fileName...")
+    security.all(readWritePermission, encryptPermission) { () =>
+      println(s"Encrypt $fileName.")
     }
 }
 
@@ -234,7 +228,7 @@ a security filter, as demonstrated in the following script.
 import little.security.{ Permission, SecurityContext, UserSecurity }
 
 object SecureMessages {
-  // Define class to pair text message with assigned permission
+  // Define class for text message with assigned permission
   private case class Message(text: String, permission: Permission)
 
   private val messages = Seq(
@@ -307,6 +301,7 @@ case class DocumentStore(userId: String, groupId: String) {
       shared match {
         // If shared, store with group permission
         case true  => storage += name -> Document(text, groupPermission)
+
         // If not shared, store with user permission
         case false => storage += name -> Document(text, userPermission)
       }
@@ -322,6 +317,7 @@ val docs = DocumentStore(user.userId, user.groupId)
 docs.put("meeting-agenda.txt", "Be on time.", true)
 docs.get("meeting-agenda.txt")
 docs.put("pto.txt", "2020-03-01 - On holiday", false)
+docs.get("pto.txt")
 ```
 
 ### The Omnipotent Root Security
