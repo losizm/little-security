@@ -123,6 +123,23 @@ object GroupPermission {
     PermissionImpl(s"<[[group=(${groupId.trim()})]]>")
 
   /**
+   * Creates set of group permissions with supplied identifiers.
+   *
+   * @param identifiers group identifiers
+   */
+  def toSet(identifiers: Iterable[String]): Set[Permission] =
+    identifiers.toSet.map(apply)
+
+  /**
+   * Creates set of group permissions with supplied identifiers.
+   *
+   * @param one group identifier
+   * @param more additional group identifiers
+   */
+  def toSet(one: String, more: String*): Set[Permission] =
+    toSet(one +: more)
+
+  /**
    * Destructures group permission to its group identifier.
    *
    * @param perm permission

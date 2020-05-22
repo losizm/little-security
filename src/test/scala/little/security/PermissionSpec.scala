@@ -87,4 +87,25 @@ class PermissionSpec extends org.scalatest.flatspec.AnyFlatSpec {
     assertThrows[IllegalArgumentException](Permission(""))
     assertThrows[IllegalArgumentException](Permission.toSet("read", "write", ""))
   }
+
+  it should "create set of group permissions" in {
+    var perms = GroupPermission.toSet("staff", "admin", "developers")
+    assert(perms.size == 3)
+    assert(perms.contains(GroupPermission("staff")))
+    assert(perms.contains(GroupPermission("admin")))
+    assert(perms.contains(GroupPermission("developers")))
+
+    perms = GroupPermission.toSet("staff", "admin", "staff", "developers", "admin")
+    assert(perms.size == 3)
+    assert(perms.contains(GroupPermission("staff")))
+    assert(perms.contains(GroupPermission("admin")))
+    assert(perms.contains(GroupPermission("developers")))
+
+    assert(GroupPermission.toSet(Nil).isEmpty)
+  }
+
+  it should "not create group permissions with null identifer" in {
+    assertThrows[NullPointerException](GroupPermission(null))
+    assertThrows[NullPointerException](GroupPermission.toSet("read", "write", null))
+  }
 }

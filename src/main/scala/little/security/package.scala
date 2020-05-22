@@ -43,7 +43,7 @@ package little
  * object SecureCache {
  *   // Define permissions for reading and writing cache entries
  *   private val getPermission = Permission("cache:get")
- *   private val setPermission = Permission("cache:set")
+ *   private val putPermission = Permission("cache:put")
  *
  *   private val cache = TrieMap[String, String](
  *     "gang starr"      -> "step in the arena",
@@ -51,26 +51,22 @@ package little
  *   )
  *
  *   def get(key: String)(implicit security: SecurityContext): String =
- *     // Tests for read permission before getting cache entry
- *     security(getPermission) { () =>
- *       cache(key)
- *     }
+ *     // Test for read permission before getting cache entry
+ *     security(getPermission) { () => cache(key) }
  *
- *   def set(key: String, value: String)(implicit security: SecurityContext): Unit =
- *     // Tests for write permission before setting cache entry
- *     security(setPermission) { () =>
- *       cache += key -> value
- *     }
+ *   def put(key: String, value: String)(implicit security: SecurityContext): Unit =
+ *     // Test for write permission before putting cache entry
+ *     security(putPermission) { () => cache += key -> value }
  * }
  *
  * // Create security context for user with read permission to cache
  * implicit val user = UserSecurity("losizm", "staff", Permission("cache:get"))
  *
  * // Get cache entry
- * val value = SecureCache.get("gang starr")
+ * val classic = SecureCache.get("gang starr")
  *
  * // Throw SecurityViolation because user lacks write permission
- * SecureCache.set("sucker mc", value)
+ * SecureCache.put("sucker mc", classic)
  * }}}
  */
 package object security
