@@ -23,7 +23,7 @@ The Scala library that adds a little security to applications.
 To use **little-security**, add it to your library dependencies.
 
 ```scala
-libraryDependencies += "com.github.losizm" %% "little-security" % "0.2.0"
+libraryDependencies += "com.github.losizm" %% "little-security" % "0.3.0"
 ```
 
 ## How It Works
@@ -52,7 +52,7 @@ import scala.collection.concurrent.TrieMap
 object SecureCache {
   // Define permissions for reading and writing cache entries
   private val getPermission = Permission("cache:get")
-  private val setPermission = Permission("cache:set")
+  private val putPermission = Permission("cache:put")
 
   private val cache = TrieMap[String, String](
     "gang starr"      -> "step in the arena",
@@ -60,26 +60,22 @@ object SecureCache {
   )
 
   def get(key: String)(implicit security: SecurityContext): String =
-    // Tests for read permission before getting cache entry
-    security(getPermission) { () =>
-      cache(key)
-    }
+    // Test for read permission before getting cache entry
+    security(getPermission) { () => cache(key) }
 
-  def set(key: String, value: String)(implicit security: SecurityContext): Unit =
-    // Tests for write permission before setting cache entry
-    security(setPermission) { () =>
-      cache += key -> value
-    }
+  def put(key: String, value: String)(implicit security: SecurityContext): Unit =
+    // Test for write permission before putting cache entry
+    security(putPermission) { () => cache += key -> value }
 }
 
 // Create security context for user with read permission to cache
 implicit val user = UserSecurity("losizm", "staff", Permission("cache:get"))
 
 // Get cache entry
-val value = SecureCache.get("gang starr")
+val classic = SecureCache.get("gang starr")
 
 // Throw SecurityViolation because user lacks write permission
-SecureCache.set("sucker mc", value)
+SecureCache.put("sucker mc", classic)
 ```
 
 ## Permission
@@ -144,19 +140,19 @@ object BuildManager {
   private val deployProdPermission = Permission("action=deploy; env=prod")
 
   def build(project: String)(implicit security: SecurityContext): Unit =
-    // Check permission before performing action
+    // Test permission before building project
     security(buildPermission) { () =>
       println(s"Build $project.")
     }
 
   def deployToDev(project: String)(implicit security: SecurityContext): Unit =
-    // Check permission before performing action
+    // Test permission before deploying project
     security(deployDevPermission) { () =>
       println(s"Deploy $project to dev environment.")
     }
 
   def deployToProd(project: String)(implicit security: SecurityContext): Unit =
-    // Check permission before performing action
+    // Test permission before deploying project
     security(deployProdPermission) { () =>
       println(s"Deploy $project to prod environment.")
     }
@@ -232,17 +228,14 @@ object SecureMessages {
   private case class Message(text: String, permission: Permission)
 
   private val messages = Seq(
-    Message("This is public message #1."   , Permission("public")),
-    Message("This is public message #2."   , Permission("public")),
-    Message("This is private message #1."  , Permission("private")),
-    Message("This is public message #3."   , Permission("public")),
-    Message("This is protected message #1.", Permission("protected"))
+    Message("This is a public message."   , Permission("public")),
+    Message("This is a protected message.", Permission("protected")),
+    Message("This is a private message."  , Permission("private"))
   )
 
   def list(implicit security: SecurityContext): Seq[String] =
     // Filter messages by testing permission
-    messages.filter(msg => security.test(msg.permission))
-      .map(_.text)
+    messages.filter(msg => security.test(msg.permission)).map(_.text)
 }
 
 // Create user with "public" and "protected" permissions
@@ -343,6 +336,52 @@ SecureMessages.list(RootSecurity).foreach(println)
 
   // Assert permission is granted
   assert(RootSecurity.test(perm))
+}
+```
+
+The following script is a more intricate example. It demonstrates how to
+simulate _sudo_ functionality. It does this by defining a group permission to
+regulate user access to `RootSecurity`.
+
+```scala
+import little.security._
+
+object sudo {
+  // Define group permission required for sudo
+  private val sudoers = GroupPermission("sudoers")
+
+  def apply[T](op: SecurityContext => T)(implicit security: SecurityContext): T =
+    // Test permission before switching to root
+    security(sudoers) { () => op(RootSecurity) }
+}
+
+object SecureMessages {
+  private case class Message(text: String, permission: Permission)
+
+  private val messages = Seq(
+    Message("This is a public message."   , Permission("public")),
+    Message("This is a protected message.", Permission("protected")),
+    Message("This is a private message."  , Permission("private"))
+  )
+
+  def list(implicit security: SecurityContext): Seq[String] =
+    messages.filter(msg => security.test(msg.permission)).map(_.text)
+}
+
+implicit val security = UserSecurity("losizm", "staff",
+  Permission("public"),
+  Permission("protected"),
+  GroupPermission("sudoers") // Add group permission required for sudo
+)
+
+println("Print messages in user context...")
+SecureMessages.list.foreach(println)
+
+println("Print messages in sudo context...")
+// NOTE: The `implicit security` below "shadows" the previously declared
+// security context. The new context is provided by sudo.
+sudo { implicit security =>
+  SecureMessages.list.foreach(println)
 }
 ```
 
