@@ -261,12 +261,9 @@ assert(user.test(UserPermission("losizm", "staff")))
 assert(user.test(GroupPermission("staff")))
 ```
 
-You're not required to make use of these permissions. However, they are added as
-convenience for possible use cases such as document sharing.
-
-For example, if a user owns a document, she should have read/write access to
-that document. And, if it's shared, then read-only access could be given to her
-group.
+You may use of these permissions in your application. For example, a document
+store could be implemented giving a single user read/write permissions,
+while allowing other users in her group read permission only.
 
 ```scala
 import little.security._
@@ -274,44 +271,28 @@ import little.security._
 import scala.collection.concurrent.TrieMap
 
 class DocumentStore(userId: String, groupId: String) {
-  private case class Document(text: String, permission: Permission)
-
   private val userPermission  = UserPermission(userId, groupId)
   private val groupPermission = GroupPermission(groupId)
 
-  private val storage = new TrieMap[String, Document]
+  private val storage = new TrieMap[String, String]
 
   def get(name: String)(implicit security: SecurityContext): String =
-    storage.get(name).map { doc =>
-      // If shared, then the user and anyone in her group can read it
-      // If not shared, then only the user can read it
-      security(doc.permission) { () => doc.text }
-    }.get
+    // Anyone in group can retrieve document
+    security(groupPermission) { () => storage(name) }
 
-  def put(name: String, text: String, shared: Boolean)
-      (implicit security: SecurityContext): Unit =
-    // Only the user can write to her document store
-    security(userPermission) { () =>
-      shared match {
-        // If shared, store with group permission
-        case true  => storage += name -> Document(text, groupPermission)
-
-        // If not shared, store with user permission
-        case false => storage += name -> Document(text, userPermission)
-      }
-    }
+  def put(name: String, doc: String)(implicit security: SecurityContext): Unit =
+    // Only owner can store document
+    security(userPermission) { () => storage += name -> doc }
 }
 
 // Create security context with user and group permissions only
-implicit val user = UserSecurity("lupita", "finance")
+implicit val owner = UserSecurity("lupita", "finance")
 
-val docs = new DocumentStore(user.userId, user.groupId)
+val docs = new DocumentStore(owner.userId, owner.groupId)
 
-// Owner can always read and write to document store
-docs.put("meeting-agenda.txt", "Be on time.", true)
+// Owner can read and write to document store
+docs.put("meeting-agenda.txt", "Increase developers' salaries")
 docs.get("meeting-agenda.txt")
-docs.put("pto.txt", "2020-03-01 - On holiday", false)
-docs.get("pto.txt")
 ```
 
 ### The Omnipotent Root Security
