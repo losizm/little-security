@@ -21,9 +21,8 @@ class SecurityContextSpec extends org.scalatest.flatspec.AnyFlatSpec {
   val insert = Permission("insert")
   val update = Permission("update")
   val delete = Permission("delete")
-  val guest1 = UserPermission("guest", "staff")
-  val guest2 = UserPermission("guest", "admin")
-  val root   = UserPermission("root", "wheel")
+  val guest  = UserPermission("guest")
+  val root   = UserPermission("root")
   val staff  = GroupPermission("staff")
   val wheel  = GroupPermission("wheel")
 
@@ -32,15 +31,21 @@ class SecurityContextSpec extends org.scalatest.flatspec.AnyFlatSpec {
 
   it should "grant permissions" in {
     val s1 = UserSecurity("guest", "staff", select, update)
+    assert(s1.test(guest))
+    assert(s1.test(staff))
     assert(s1.test(select))
     assert(s1.test(update))
 
     val s2 = s1.grant(insert)
+    assert(s2.test(guest))
+    assert(s2.test(staff))
     assert(s2.test(select))
     assert(s2.test(update))
     assert(s2.test(insert))
 
     val s3 = s1.grant(insert, delete)
+    assert(s3.test(guest))
+    assert(s3.test(staff))
     assert(s3.test(select))
     assert(s3.test(update))
     assert(s3.test(insert))
@@ -49,14 +54,20 @@ class SecurityContextSpec extends org.scalatest.flatspec.AnyFlatSpec {
 
   it should "revoke permissions" in {
     val s1 = UserSecurity("guest", "staff", select, update)
+    assert(s1.test(guest))
+    assert(s1.test(staff))
     assert(s1.test(select))
     assert(s1.test(update))
 
     val s2 = s1.revoke(update)
+    assert(s2.test(guest))
+    assert(s2.test(staff))
     assert(s2.test(select))
     assert(!s2.test(update))
 
     val s3 = s1.revoke(select, update)
+    assert(s3.test(guest))
+    assert(s3.test(staff))
     assert(!s3.test(select))
     assert(!s3.test(update))
   }
@@ -65,7 +76,7 @@ class SecurityContextSpec extends org.scalatest.flatspec.AnyFlatSpec {
     assert { security(select)(() => 1) == 1 }
     assert { security(update)(() => 1) == 1 }
 
-    assert { security(guest1)(() => 1) == 1 }
+    assert { security(guest)(() => 1) == 1 }
     assert { security(staff)(() => 1) == 1 }
   }
 
@@ -73,7 +84,6 @@ class SecurityContextSpec extends org.scalatest.flatspec.AnyFlatSpec {
     assertThrows[SecurityViolation] { security(insert)(() => 1) }
     assertThrows[SecurityViolation] { security(delete)(() => 1) }
 
-    assertThrows[SecurityViolation] { security(guest2)(() => 1) }
     assertThrows[SecurityViolation] { security(root)(() => 1) }
     assertThrows[SecurityViolation] { security(wheel)(() => 1) }
   }
@@ -100,7 +110,7 @@ class SecurityContextSpec extends org.scalatest.flatspec.AnyFlatSpec {
     assertThrows[SecurityViolation] { security.any(insert, create, delete)(() => 1) }
     assertThrows[SecurityViolation] { security.any(insert, create)(() => 1) }
     assertThrows[SecurityViolation] { security.any(insert)(() => 1) }
-    assertThrows[SecurityViolation] { security.any(guest2, root, wheel)(() => 1) }
+    assertThrows[SecurityViolation] { security.any(root, wheel)(() => 1) }
   }
 
   it should "authorize operation for all permission" in {

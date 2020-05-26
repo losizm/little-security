@@ -79,26 +79,42 @@ object Permission {
  * @see [[GroupPermission]]
  */
 object UserPermission {
-  private val nameRegex = """<\[\[user=\((.*):(.*)\)\]\]>""".r
+  private val nameRegex = """<\[\[user=\((.*)\)\]\]>""".r
 
   /**
-   * Creates user permission with supplied user and group identifiers.
+   * Creates user permission with supplied user identifier.
    *
    * @param userId user identifier
-   * @param groupId group identifier
    */
-  def apply(userId: String, groupId: String): Permission =
-    PermissionImpl(s"<[[user=(${userId.trim()}:${groupId.trim()})]]>")
+  def apply(userId: String): Permission =
+    PermissionImpl(s"<[[user=(${userId.trim()})]]>")
 
   /**
-   * Destructures user permission to its user and group identifiers.
+   * Creates set of user permissions with supplied identifiers.
+   *
+   * @param ids user identifiers
+   */
+  def toSet(ids: Iterable[String]): Set[Permission] =
+    ids.toSet.map(apply)
+
+  /**
+   * Creates set of user permissions with supplied identifiers.
+   *
+   * @param one user identifier
+   * @param more additional user identifiers
+   */
+  def toSet(one: String, more: String*): Set[Permission] =
+    toSet(one +: more)
+
+  /**
+   * Destructures user permission to its user identifier.
    *
    * @param perm permission
    */
-  def unapply(perm: Permission): Option[(String, String)] =
+  def unapply(perm: Permission): Option[String] =
     perm match {
-      case Permission(nameRegex(userId, groupId)) => Some((userId, groupId))
-      case _                                      => None
+      case Permission(nameRegex(userId)) => Some(userId)
+      case _                             => None
     }
 }
 
@@ -125,10 +141,10 @@ object GroupPermission {
   /**
    * Creates set of group permissions with supplied identifiers.
    *
-   * @param identifiers group identifiers
+   * @param ids group identifiers
    */
-  def toSet(identifiers: Iterable[String]): Set[Permission] =
-    identifiers.toSet.map(apply)
+  def toSet(ids: Iterable[String]): Set[Permission] =
+    ids.toSet.map(apply)
 
   /**
    * Creates set of group permissions with supplied identifiers.

@@ -32,8 +32,8 @@ package little
  *
  * == Security in Action ==
  *
- * The following script provides an example of how read/write access to an
- * in-memory cache could be implemented.
+ * The following script demonstrates how read/write access to an in-memory cache
+ * could be implemented. See inline comments for notable bits of code.
  *
  * {{{
  * import little.security.{ Permission, SecurityContext, UserSecurity }

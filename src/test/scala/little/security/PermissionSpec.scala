@@ -36,29 +36,29 @@ class PermissionSpec extends org.scalatest.flatspec.AnyFlatSpec {
     )
 
     assert(
-      UserPermission("root", "wheel") match {
-        case UserPermission(userId, groupId) => userId == "root" && groupId == "wheel"
-        case _                               => false
+      UserPermission("guest") match {
+        case UserPermission(userId) => userId == "guest"
+        case _                      => false
       }
     )
 
     assert(
-      UserPermission("root", "wheel") match {
-        case UserPermission("root", "wheel") => true
-        case _                               => false
+      UserPermission("guest") match {
+        case UserPermission("guest") => true
+        case _                       => false
       }
     )
 
     assert(
-      GroupPermission("wheel") match {
-        case GroupPermission(groupId) => groupId == "wheel"
+      GroupPermission("staff") match {
+        case GroupPermission(groupId) => groupId == "staff"
         case _                        => false
       }
     )
 
     assert(
-      GroupPermission("wheel") match {
-        case GroupPermission("wheel") => true
+      GroupPermission("staff") match {
+        case GroupPermission("staff") => true
         case _                        => false
       }
     )
@@ -88,6 +88,27 @@ class PermissionSpec extends org.scalatest.flatspec.AnyFlatSpec {
     assertThrows[IllegalArgumentException](Permission.toSet("read", "write", ""))
   }
 
+  it should "create set of user permissions" in {
+    var perms = UserPermission.toSet("ishmael", "isaac", "guest")
+    assert(perms.size == 3)
+    assert(perms.contains(UserPermission("ishmael")))
+    assert(perms.contains(UserPermission("isaac")))
+    assert(perms.contains(UserPermission("guest")))
+
+    perms = UserPermission.toSet("ishmael", "isaac", "ishmael", "guest", "isaac")
+    assert(perms.size == 3)
+    assert(perms.contains(UserPermission("ishmael")))
+    assert(perms.contains(UserPermission("isaac")))
+    assert(perms.contains(UserPermission("guest")))
+
+    assert(UserPermission.toSet(Nil).isEmpty)
+  }
+
+  it should "not create user permissions with null identifer" in {
+    assertThrows[NullPointerException](UserPermission(null))
+    assertThrows[NullPointerException](UserPermission.toSet("ishmael", "isaac", null))
+  }
+
   it should "create set of group permissions" in {
     var perms = GroupPermission.toSet("staff", "admin", "developers")
     assert(perms.size == 3)
@@ -106,6 +127,6 @@ class PermissionSpec extends org.scalatest.flatspec.AnyFlatSpec {
 
   it should "not create group permissions with null identifer" in {
     assertThrows[NullPointerException](GroupPermission(null))
-    assertThrows[NullPointerException](GroupPermission.toSet("read", "write", null))
+    assertThrows[NullPointerException](GroupPermission.toSet("staff", "admin", null))
   }
 }

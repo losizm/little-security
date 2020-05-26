@@ -233,35 +233,41 @@ sealed trait UserSecurity extends SecurityContext {
 /** Provides `UserSecurity` factory. */
 object UserSecurity {
   /**
-   * Creates `UserSecurity` using supplied identity.
+   * Creates `UserSecurity` with supplied identity.
    *
    * @param userId user identifier
    * @param groupId group identifier
+   *
+   * @note User and group permissions added to security context.
    */
   def apply(userId: String, groupId: String): UserSecurity =
     apply(userId, groupId, Set.empty[Permission])
 
   /**
-   * Creates `UserSecurity` using supplied identity and permissions.
+   * Creates `UserSecurity` with supplied identity and permissions.
    *
    * @param userId user identifier
    * @param groupId group identifier
    * @param permissions permissions
+   *
+   * @note User and group permissions are added to set of supplied permissions.
    */
   def apply(userId: String, groupId: String, permissions: Set[Permission]): UserSecurity = {
     val uid = userId.trim()
     val gid = groupId.trim()
 
-    UserSecurityImpl(uid, gid, permissions + UserPermission(uid, gid) + GroupPermission(gid))
+    UserSecurityImpl(uid, gid, permissions + UserPermission(uid) + GroupPermission(gid))
   }
 
   /**
-   * Creates `UserSecurity` using supplied identity and permissions.
+   * Creates `UserSecurity` with supplied identity and permissions.
    *
    * @param userId user identifier
    * @param groupId group identifier
    * @param one permission
    * @param more additional permissions
+   *
+   * @note User and group permissions are added to set of supplied permissions.
    */
   def apply(userId: String, groupId: String, one: Permission, more: Permission*): UserSecurity =
     apply(userId, groupId, (one +: more).toSet)
