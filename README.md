@@ -23,7 +23,7 @@ The Scala library that adds a little security to applications.
 To use **little-security**, add it to your library dependencies.
 
 ```scala
-libraryDependencies += "com.github.losizm" %% "little-security" % "0.3.0"
+libraryDependencies += "com.github.losizm" %% "little-security" % "0.4.0"
 ```
 
 ## How It Works
@@ -96,26 +96,26 @@ val perm3 = Permission("[[read]] /api/modules/archive")
 
 A user permission is created with `UserPermission`. There's no implementing
 class: It's just a factory. It constructs a permission with a specially
-formatted name using user and group identiers.
+formatted name using a user identifier.
 
 ```scala
-val userPermission = UserPermission("losizm", "staff")
+val userPermission = UserPermission("losizm")
 
-// Destructure permission to its user and group identifiers
+// Destructure permission to its user identifier
 userPermission match {
-  case UserPermission(uid, gid) => println(s"userId=$uid, groupId=$gid")
+  case UserPermission(userId) => println(s"uid=$userId")
 }
 ```
 
 And `GroupPermission` constructs a permission with a specially formatted name
-using a group identifier only.
+using a group identifier.
 
 ```scala
 val groupPermission = GroupPermission("staff")
 
 // Destructure permission to its group identifier
 groupPermission match {
-  case GroupPermission(gid) => println(s"groupId=$gid")
+  case GroupPermission(groupId) => println(s"gid=$groupId")
 }
 ```
 
@@ -176,7 +176,7 @@ BuildManager.deployToProd("my-favorite-app")
 
 ### Granting Any or All Permissions
 
-`SecurityContext.any(Permission*)` is used to ensure that at least one of the
+`SecurityContext.any(Permission*)` is used to ensure that at least one of
 supplied permissions is granted before an operation is applied.
 
 `SecurityContext.all(Permission*)` is used to ensure that all supplied
@@ -214,7 +214,7 @@ FileManager.encrypt("/etc/passwd")
 
 ### Testing Permissions
 
-Sometimes, it may be enough to simply check a permission to see whether it is
+Sometimes, it may be enough to simply test a permission to see whether it is
 granted, and not necessarily throw a `SecurityViolation` if it isn't. That's
 precisely what `SecurityContext.test(Permission)` is for. It returns `true` or
 `false` based on the permission being granted or not. It's an ideal predicate to
@@ -257,7 +257,7 @@ added to the permissions expressly supplied in constructor.
 val user = UserSecurity("losizm", "staff", Permission("read"))
 
 assert(user.test(Permission("read")))
-assert(user.test(UserPermission("losizm", "staff")))
+assert(user.test(UserPermission("losizm")))
 assert(user.test(GroupPermission("staff")))
 ```
 
@@ -271,7 +271,7 @@ import little.security._
 import scala.collection.concurrent.TrieMap
 
 class DocumentStore(userId: String, groupId: String) {
-  private val userPermission  = UserPermission(userId, groupId)
+  private val userPermission  = UserPermission(userId)
   private val groupPermission = GroupPermission(groupId)
 
   private val storage = new TrieMap[String, String]
@@ -304,7 +304,7 @@ The other type of security context is `RootSecurity`, which has an infinite set
 of granted permissions. That is, there's no permission it doesn't have. It's the
 _superuser_ security context.
 
-`RootSecurity` is an object implementation, so there's only one instance of it.
+`RootSecurity` is an object implementation, so there is only one instance of it.
 It should be used for the purpose of effectively bypassing security checks.
 
 ```scala
