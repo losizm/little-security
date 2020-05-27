@@ -1,6 +1,6 @@
 organization := "com.github.losizm"
 name := "little-security"
-version := "0.3.0"
+version := "0.4.0"
 
 description := "The Scala library that adds a little security to applications"
 homepage := Some(url("https://github.com/losizm/little-security"))
