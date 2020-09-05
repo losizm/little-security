@@ -6,9 +6,9 @@ description := "The Scala library that adds a little security to applications"
 homepage := Some(url("https://github.com/losizm/little-security"))
 licenses := List("Apache License, Version 2" -> url("http://www.apache.org/licenses/LICENSE-2.0.txt"))
 
-scalaVersion := "2.13.2"
+scalaVersion := "2.13.3"
 scalacOptions ++= Seq("-deprecation", "-feature", "-Xcheckinit")
-crossScalaVersions := Seq("2.12.11")
+crossScalaVersions := Seq("2.12.12")
 
 Compile / unmanagedSourceDirectories += {
   (Compile / sourceDirectory).value / s"scala-${scalaBinaryVersion.value}"
