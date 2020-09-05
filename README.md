@@ -23,7 +23,7 @@ The Scala library that adds a little security to applications.
 To use **little-security**, add it to your library dependencies.
 
 ```scala
-libraryDependencies += "com.github.losizm" %% "little-security" % "0.4.0"
+libraryDependencies += "com.github.losizm" %% "little-security" % "0.5.0"
 ```
 
 ## How It Works
@@ -61,11 +61,11 @@ object SecureCache {
 
   def get(key: String)(implicit security: SecurityContext): String =
     // Test for read permission before getting cache entry
-    security(getPermission) { () => cache(key) }
+    security(getPermission) { cache(key) }
 
   def put(key: String, value: String)(implicit security: SecurityContext): Unit =
     // Test for write permission before putting cache entry
-    security(putPermission) { () => cache += key -> value }
+    security(putPermission) { cache += key -> value }
 }
 
 // Create security context for user with read permission to cache
@@ -141,19 +141,19 @@ object BuildManager {
 
   def build(project: String)(implicit security: SecurityContext): Unit =
     // Test permission before building project
-    security(buildPermission) { () =>
+    security(buildPermission) {
       println(s"Build $project.")
     }
 
   def deployToDev(project: String)(implicit security: SecurityContext): Unit =
     // Test permission before deploying project
-    security(deployDevPermission) { () =>
+    security(deployDevPermission) {
       println(s"Deploy $project to dev environment.")
     }
 
   def deployToProd(project: String)(implicit security: SecurityContext): Unit =
     // Test permission before deploying project
-    security(deployProdPermission) { () =>
+    security(deployProdPermission) {
       println(s"Deploy $project to prod environment.")
     }
 }
@@ -192,13 +192,13 @@ object FileManager {
 
   def read(fileName: String)(implicit security: SecurityContext): Unit =
     // Get either read-only or read-write permission before performing operation
-    security.any(readOnlyPermission, readWritePermission) { () =>
+    security.any(readOnlyPermission, readWritePermission) {
       println(s"Read $fileName.")
     }
 
   def encrypt(fileName: String)(implicit security: SecurityContext): Unit =
     // Get both read-write and encrypt permissions before performing operation
-    security.all(readWritePermission, encryptPermission) { () =>
+    security.all(readWritePermission, encryptPermission) {
       println(s"Encrypt $fileName.")
     }
 }
@@ -261,9 +261,9 @@ assert(user.test(UserPermission("losizm")))
 assert(user.test(GroupPermission("staff")))
 ```
 
-You may use of these permissions in your application. For example, a document
-store could be implemented giving a single user read/write permissions,
-while allowing other users in her group read permission only.
+You may use these permissions in your application. For example, a document store
+could be implemented giving a single user read/write permissions, while allowing
+other users in her group read permission only.
 
 ```scala
 import little.security._
@@ -278,11 +278,11 @@ class DocumentStore(userId: String, groupId: String) {
 
   def get(name: String)(implicit security: SecurityContext): String =
     // Anyone in group can retrieve document
-    security(groupPermission) { () => storage(name) }
+    security(groupPermission) { storage(name) }
 
   def put(name: String, doc: String)(implicit security: SecurityContext): Unit =
     // Only owner can store document
-    security(userPermission) { () => storage += name -> doc }
+    security(userPermission) { storage += name -> doc }
 }
 
 // Create security context with user and group permissions only
@@ -333,7 +333,7 @@ object sudo {
 
   def apply[T](op: SecurityContext => T)(implicit security: SecurityContext): T =
     // Test permission before switching to root
-    security(sudoers) { () => op(RootSecurity) }
+    security(sudoers) { op(RootSecurity) }
 }
 
 object SecureMessages {

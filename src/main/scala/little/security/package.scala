@@ -52,11 +52,11 @@ package little
  *
  *   def get(key: String)(implicit security: SecurityContext): String =
  *     // Test for read permission before getting cache entry
- *     security(getPermission) { () => cache(key) }
+ *     security(getPermission) { cache(key) }
  *
  *   def put(key: String, value: String)(implicit security: SecurityContext): Unit =
  *     // Test for write permission before putting cache entry
- *     security(putPermission) { () => cache += key -> value }
+ *     security(putPermission) { cache += key -> value }
  * }
  *
  * // Create security context for user with read permission to cache
