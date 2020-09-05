@@ -19,7 +19,7 @@ Compile / unmanagedSourceDirectories += {
   (Compile / sourceDirectory).value / s"scala-${scalaBinaryVersion.value}"
 }
 
-libraryDependencies += "org.scalatest" %% "scalatest" % "3.1.1" % "test"
+libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.0" % "test"
 
 developers := List(
   Developer(
