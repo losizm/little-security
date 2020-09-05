@@ -1,6 +1,6 @@
 organization := "com.github.losizm"
 name := "little-security"
-version := "0.5.0"
+version := "0.5.1"
 
 description := "The Scala library that adds a little security to applications"
 homepage := Some(url("https://github.com/losizm/little-security"))
@@ -11,7 +11,7 @@ scalacOptions ++= Seq("-deprecation", "-feature", "-Xcheckinit")
 crossScalaVersions := Seq("2.12.12")
 
 Compile / doc / scalacOptions ++= Seq(
-  "-doc-title", "Scamper",
+  "-doc-title", "little-security",
   "-doc-version", version.value
 )
 
