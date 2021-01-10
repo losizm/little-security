@@ -283,7 +283,7 @@ private case class UserContextImpl(userId: String, groupId: String, permissions:
     permissions.contains(perm)
 
   def withPermissions(perms: Set[Permission]): UserContext =
-    copy(permissions = perms)
+    copy(permissions = perms + UserPermission(userId) + GroupPermission(groupId))
 
   override lazy val toString = s"UserContext($userId,$groupId,$permissions)"
 }

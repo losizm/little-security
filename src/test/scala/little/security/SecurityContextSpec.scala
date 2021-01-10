@@ -72,6 +72,34 @@ class SecurityContextSpec extends org.scalatest.flatspec.AnyFlatSpec {
     assert(!s3.test(update))
   }
 
+  it should "reset permissions" in {
+    val s1 = UserContext("guest", "staff", select, update)
+    assert(s1.test(guest))
+    assert(s1.test(staff))
+    assert(s1.test(select))
+    assert(s1.test(update))
+
+    val s2 = s1.withPermissions(create, insert)
+    assert(s2.test(guest))
+    assert(s2.test(staff))
+    assert(s2.test(create))
+    assert(s2.test(insert))
+    assert(!s2.test(select))
+    assert(!s2.test(update))
+
+    val s3 = s1.withPermissions(Set.empty[Permission])
+    assert(s3.test(guest))
+    assert(s3.test(staff))
+    assert(!s3.test(select))
+    assert(!s3.test(update))
+
+    val s4 = s1.revoke(s1.permissions)
+    assert(s4.test(guest))
+    assert(s4.test(staff))
+    assert(!s4.test(select))
+    assert(!s4.test(update))
+  }
+
   it should "authorize operation" in {
     assert { security(select)(1) == 1 }
     assert { security(update)(1) == 1 }
