@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Carlos Conyers
+ * Copyright 2021 Carlos Conyers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -156,28 +156,6 @@ sealed trait UserContext extends SecurityContext {
   def permissions: Set[Permission]
 
   /**
-   * Creates new security context by replacing existing permissions with
-   * supplied permissions.
-   *
-   * @param perms permissions
-   *
-   * @return new security context
-   */
-  def withPermissions(perms: Set[Permission]): UserContext
-
-  /**
-   * Creates new security context by replacing existing permissions with
-   * supplied permissions.
-   *
-   * @param one permission
-   * @param more additional permissions
-   *
-   * @return new security context
-   */
-  def withPermissions(one: Permission, more: Permission*): UserContext =
-    withPermissions((one +: more).toSet)
-
-  /**
    * Creates new security context by adding supplied permissions to existing set
    * of permissions.
    *
@@ -185,8 +163,7 @@ sealed trait UserContext extends SecurityContext {
    *
    * @return new security context
    */
-  def grant(perms: Set[Permission]): UserContext =
-    withPermissions(permissions ++ perms)
+  def grant(perms: Set[Permission]): UserContext
 
   /**
    * Creates new security context by adding supplied permissions to existing set
@@ -208,8 +185,7 @@ sealed trait UserContext extends SecurityContext {
    *
    * @return new security context
    */
-  def revoke(perms: Set[Permission]): UserContext =
-    withPermissions(permissions.diff(perms))
+  def revoke(perms: Set[Permission]): UserContext
 
   /**
    * Creates new security context by removing supplied permissions from existing
@@ -279,11 +255,18 @@ object UserContext {
 }
 
 private case class UserContextImpl(userId: String, groupId: String, permissions: Set[Permission]) extends UserContext {
+  permissions.collect {
+    case UserPermission(uid) => require(uid == userId, s"Conflicting user permission: $uid")
+  }
+
   def test(perm: Permission): Boolean =
     permissions.contains(perm)
 
-  def withPermissions(perms: Set[Permission]): UserContext =
-    copy(permissions = perms + UserPermission(userId) + GroupPermission(groupId))
+  def grant(perms: Set[Permission]): UserContext =
+    copy(permissions = permissions ++ perms)
+
+  def revoke(perms: Set[Permission]): UserContext =
+    copy(permissions = (permissions &~ perms) + UserPermission(userId) + GroupPermission(groupId))
 
   override lazy val toString = s"UserContext($userId,$groupId,$permissions)"
 }
