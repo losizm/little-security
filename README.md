@@ -14,7 +14,7 @@ The Scala library that adds a little security to applications.
   - [Granting Any or All Permissions](#Granting-Any-or-All-Permissions)
   - [Testing Permissions](#Testing-Permissions)
   - [Automatic User and Group Permissions](#Automatic-User-and-Group-Permissions)
-  - [The Omnipotent Root Security](#The-Omnipotent-Root-Security)
+  - [The Omnipotent Root Context](#The-Omnipotent-Root-Context)
 - [API Documentation](#API-Documentation)
 - [License](#License)
 
@@ -41,8 +41,7 @@ performed only if its required permissions are granted. Otherwise, a
 ### Security in Action
 
 The following script demonstrates how read/write access to an in-memory cache
-could be implemented. We won't discuss any of its details: It's provided merely
-to highlight a simple use case. See inline comments for notable bits of code.
+could be implemented.
 
 ```scala
 import little.security.{ Permission, SecurityContext, UserContext }
@@ -81,7 +80,7 @@ SecureCache.put("sucker mc", classic)
 ## Permission
 
 A `Permission` is identified by its name, and you're free to implement any
-convention for the names used in your application.
+convention for the names.
 
 The following defines 3 permissions, any of which could be used as a
 permission for read access to an archive module.
@@ -89,7 +88,7 @@ permission for read access to an archive module.
 ```scala
 val perm1 = Permission("archive:read")
 val perm2 = Permission("module=archive; access=read")
-val perm3 = Permission("[[read]] /api/modules/archive")
+val perm3 = Permission("[[GET]] /api/modules/archive")
 ```
 
 ### User and Group Permissions
@@ -123,8 +122,8 @@ See also [Automatic User and Group Permissions](#Automatic-User-and-Group-Permis
 
 ## Security Context
 
-A `SecurityContext` is consulted for permission to apply a restricted operation.
-If permission is granted, the operation is applied; otherwise, the security
+A `SecurityContext` is consulted for authorization to apply a restricted
+operation. If authorized, the operation is applied; otherwise, the security
 context raises a `SecurityViolation`.
 
 `UserContext` is an implementation of a security context. It is constructed

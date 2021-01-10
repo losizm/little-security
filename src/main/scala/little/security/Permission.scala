@@ -72,9 +72,9 @@ object Permission {
 /**
  * Provides factory for creating user permissions.
  *
- * A user permission should be applied to operations that must be restricted to
- * a specific user. For example, if a user owns a resource, then write access to
- * the resource can be restricted to the user.
+ * A user permission should be applied to an operation that must be restricted
+ * to a specific user. For example, if a user owns a resource, then write access
+ * to the resource can be restricted to the user.
  *
  * @see [[GroupPermission]]
  */
@@ -121,9 +121,9 @@ object UserPermission {
 /**
  * Provides factory for creating group permissions.
  *
- * A group permission should be applied to operations that must be restricted to
- * a specific group of users. For example, if a user owns a resource, then read
- * access to the resource can be restricted to the user's group.
+ * A group permission should be applied to an operation that must be restricted
+ * to a specific group of users. For example, if a user owns a resource, then
+ * read access to the resource can be restricted to the user's group.
  *
  * @see [[UserPermission]]
  */
