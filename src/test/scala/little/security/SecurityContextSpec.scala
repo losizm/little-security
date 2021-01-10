@@ -61,7 +61,7 @@ class SecurityContextSpec extends org.scalatest.flatspec.AnyFlatSpec {
     }
   }
 
-  it should "grant permissions" in {
+  "UserContext" should "grant permissions" in {
     val s1 = UserContext("guest", "staff", select, update)
     assert(s1.userId == "guest")
     assert(s1.groupId == "staff")
@@ -189,7 +189,7 @@ class SecurityContextSpec extends org.scalatest.flatspec.AnyFlatSpec {
     assertThrows[SecurityViolation] { security.any(root, wheel)(1) }
   }
 
-  it should "authorize operation for all permission" in {
+  it should "authorize operation for all permissions" in {
     assert { security.all(select, update)(1) == 1 }
     assert { security.all(update, select)(1) == 1 }
 
@@ -201,7 +201,7 @@ class SecurityContextSpec extends org.scalatest.flatspec.AnyFlatSpec {
     assert { security.all(empty)(1) == 1 }
   }
 
-  it should "not authorize operation for all permission" in {
+  it should "not authorize operation for all permissions" in {
     assertThrows[SecurityViolation] { security.all(select, create, insert)(1) }
     assertThrows[SecurityViolation] { security.all(insert, select, create)(1) }
     assertThrows[SecurityViolation] { security.all(create, insert, select)(1) }
@@ -217,5 +217,24 @@ class SecurityContextSpec extends org.scalatest.flatspec.AnyFlatSpec {
 
     assertThrows[SecurityViolation] { security.all(create)(1) }
     assertThrows[SecurityViolation] { security.all(insert)(1) }
+  }
+
+  "RootContext" should "test permissions" in {
+    assert { RootContext.test(create) }
+    assert { RootContext.test(select) }
+    assert { RootContext.test(update) }
+    assert { RootContext.test(delete) }
+    assert { RootContext.test(guest) }
+    assert { RootContext.test(root) }
+    assert { RootContext.test(staff) }
+    assert { RootContext.test(wheel) }
+  }
+
+  it should "authorize operation for all permissions" in {
+    assert { RootContext.all(create, select, update, delete, guest, root, staff, wheel)(1) == 1 }
+  }
+
+  it should "authorize operation for any permission" in {
+    assert { RootContext.any(create, select, update, delete, guest, root, staff, wheel)(1) == 1 }
   }
 }
