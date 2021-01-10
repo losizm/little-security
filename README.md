@@ -23,7 +23,7 @@ The Scala library that adds a little security to applications.
 To use **little-security**, add it to your library dependencies.
 
 ```scala
-libraryDependencies += "com.github.losizm" %% "little-security" % "0.5.1"
+libraryDependencies += "com.github.losizm" %% "little-security" % "0.6.0"
 ```
 
 ## How It Works
@@ -45,7 +45,7 @@ could be implemented. We won't discuss any of its details: It's provided merely
 to highlight a simple use case. See inline comments for notable bits of code.
 
 ```scala
-import little.security.{ Permission, SecurityContext, UserSecurity }
+import little.security.{ Permission, SecurityContext, UserContext }
 
 import scala.collection.concurrent.TrieMap
 
@@ -69,7 +69,7 @@ object SecureCache {
 }
 
 // Create security context for user with read permission to cache
-implicit val user = UserSecurity("losizm", "staff", Permission("cache:get"))
+implicit val user = UserContext("losizm", "staff", Permission("cache:get"))
 
 // Get cache entry
 val classic = SecureCache.get("gang starr")
@@ -127,12 +127,12 @@ A `SecurityContext` is consulted for permission to apply a restricted operation.
 If permission is granted, the operation is applied; otherwise, the security
 context raises a `SecurityViolation`.
 
-`UserSecurity` is an implementation of a security context. It is constructed
+`UserContext` is an implementation of a security context. It is constructed
 with supplied user and group identifiers along with a set of granted
 permissions.
 
 ```scala
-import little.security.{ Permission, SecurityContext, UserSecurity }
+import little.security.{ Permission, SecurityContext, UserContext }
 
 object BuildManager {
   private val buildPermission      = Permission("action=build")
@@ -159,7 +159,7 @@ object BuildManager {
 }
 
 // Create user security with two permissions
-implicit val user = UserSecurity("ishmael", "developer",
+implicit val user = UserContext("ishmael", "developer",
   Permission("action=build"),
   Permission("action=deploy; env=dev")
 )
@@ -183,7 +183,7 @@ supplied permissions is granted before an operation is applied.
 permissions are granted before an operation is applied.
 
 ```scala
-import little.security.{ Permission, SecurityContext, UserSecurity }
+import little.security.{ Permission, SecurityContext, UserContext }
 
 object FileManager {
   private val readOnlyPermission  = Permission("file:read-only")
@@ -203,7 +203,7 @@ object FileManager {
     }
 }
 
-implicit val user = UserSecurity("isaac", "ops", Permission("file:read-write"))
+implicit val user = UserContext("isaac", "ops", Permission("file:read-write"))
 
 // Can read via read-write permission
 FileManager.read("/etc/passwd")
@@ -221,7 +221,7 @@ precisely what `SecurityContext.test(Permission)` is for. It returns `true` or
 a security filter, as demonstrated in the following script.
 
 ```scala
-import little.security.{ Permission, SecurityContext, UserSecurity }
+import little.security.{ Permission, SecurityContext, UserContext }
 
 object SecureMessages {
   // Define class for text message with assigned permission
@@ -239,7 +239,7 @@ object SecureMessages {
 }
 
 // Create user with "public" and "protected" permissions
-implicit val user = UserSecurity("losizm", "staff",
+implicit val user = UserContext("losizm", "staff",
   Permission("public"),
   Permission("protected")
 )
@@ -250,11 +250,11 @@ SecureMessages.list.foreach(println)
 
 ### Automatic User and Group Permissions
 
-When an instance of `UserSecurity` is created, user and group permissions are
+When an instance of `UserContext` is created, user and group permissions are
 added to the permissions expressly supplied in constructor.
 
 ```scala
-val user = UserSecurity("losizm", "staff", Permission("read"))
+val user = UserContext("losizm", "staff", Permission("read"))
 
 assert(user.test(Permission("read")))
 assert(user.test(UserPermission("losizm")))
@@ -286,7 +286,7 @@ class DocumentStore(userId: String, groupId: String) {
 }
 
 // Create security context with user and group permissions only
-implicit val owner = UserSecurity("lupita", "finance")
+implicit val owner = UserContext("lupita", "finance")
 
 val docs = new DocumentStore(owner.userId, owner.groupId)
 
@@ -295,34 +295,34 @@ docs.put("meeting-agenda.txt", "Increase developers' salaries")
 docs.get("meeting-agenda.txt")
 ```
 
-### The Omnipotent Root Security
+### The Omnipotent Root Context
 
-In the examples so far, we've used `UserSecurity`, which is a security context
+In the examples so far, we've used `UserContext`, which is a security context
 with a finite set of granted permissions.
 
-The other type of security context is `RootSecurity`, which has an infinite set
-of granted permissions. That is, there's no permission it doesn't have. It's the
+The other type of security context is `RootContext`, which has an infinite set
+of granted permissions. Rather, there's no permission it doesn't have. It's the
 _superuser_ security context.
 
-`RootSecurity` is an object implementation, so there is only one instance of it.
+`RootContext` is an object implementation, so there is only one instance of it.
 It should be used for the purpose of effectively bypassing security checks.
 
 ```scala
 // Print all messages
-SecureMessages.list(RootSecurity).foreach(println)
+SecureMessages.list(RootContext).foreach(println)
 
 (0 to 999999).foreach { _ =>
   // Create permission with randomly generated name
   val perm = Permission(scala.util.Random.nextString(8))
 
   // Assert permission is granted
-  assert(RootSecurity.test(perm))
+  assert(RootContext.test(perm))
 }
 ```
 
 The following script is a more intricate example. It demonstrates how to
 simulate _sudo_ functionality. It does this by defining a group permission to
-regulate user access to `RootSecurity`.
+regulate user access to `RootContext`.
 
 ```scala
 import little.security._
@@ -333,7 +333,7 @@ object sudo {
 
   def apply[T](op: SecurityContext => T)(implicit security: SecurityContext): T =
     // Test permission before switching to root
-    security(sudoers) { op(RootSecurity) }
+    security(sudoers) { op(RootContext) }
 }
 
 object SecureMessages {
@@ -349,7 +349,7 @@ object SecureMessages {
     messages.filter(msg => security.test(msg.permission)).map(_.text)
 }
 
-implicit val security = UserSecurity("losizm", "staff",
+implicit val security = UserContext("losizm", "staff",
   Permission("public"),
   Permission("protected"),
   GroupPermission("sudoers") // Add group permission required for sudo

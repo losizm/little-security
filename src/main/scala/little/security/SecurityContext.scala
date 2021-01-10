@@ -35,7 +35,7 @@ sealed trait SecurityContext {
    * @param perm permission
    * @param op operation
    *
-   * @return result of operation
+   * @return value of operation
    *
    * @throws SecurityViolation if permission is not granted
    */
@@ -54,7 +54,7 @@ sealed trait SecurityContext {
    * @param perms permissions
    * @param op operation
    *
-   * @return result of operation
+   * @return value of operation
    *
    * @throws SecurityViolation if no permission is granted
    *
@@ -77,7 +77,7 @@ sealed trait SecurityContext {
    * @param more additional permissions
    * @param op operation
    *
-   * @return result of operation
+   * @return value of operation
    *
    * @throws SecurityViolation if no permission is granted
    */
@@ -93,7 +93,7 @@ sealed trait SecurityContext {
    * @param perms permissions
    * @param op operation
    *
-   * @return result of operation
+   * @return value of operation
    *
    * @throws SecurityViolation if all permissions are not granted
    *
@@ -115,7 +115,7 @@ sealed trait SecurityContext {
    * @param more additional permissions
    * @param op operation
    *
-   * @return result of operation
+   * @return value of operation
    *
    * @throws SecurityViolation if all permissions are not granted
    */
@@ -124,11 +124,11 @@ sealed trait SecurityContext {
 }
 
 /**
- * Defines root security in which all permissions are granted.
+ * Defines root context in which all permissions are granted.
  *
- * @see [[UserSecurity]]
+ * @see [[UserContext]]
  */
-object RootSecurity extends SecurityContext {
+object RootContext extends SecurityContext {
   /**
    * @inheritdoc
    *
@@ -137,28 +137,22 @@ object RootSecurity extends SecurityContext {
   def test(perm: Permission): Boolean = true
 
   /** Gets string representation. */
-  override val toString = "RootSecurity"
+  override val toString = "RootContext"
 }
 
 /**
- * Defines user security in which a set of permissions is granted.
+ * Defines user context in which a set of permissions is granted.
  *
- * @see [[RootSecurity]]
+ * @see [[RootContext]]
  */
-sealed trait UserSecurity extends SecurityContext {
+sealed trait UserContext extends SecurityContext {
   /** Gets user identifier. */
   def userId: String
 
   /** Gets group identifier. */
   def groupId: String
 
-  /**
-   * Gets permissions.
-   *
-   * @note This set may not contain the full set of permissions granted to
-   * security context. There may be inferred permissions that are not included.
-   * Therefore, a permission must be tested to determine whether it is granted.
-   */
+  /** Gets permissions. */
   def permissions: Set[Permission]
 
   /**
@@ -169,7 +163,7 @@ sealed trait UserSecurity extends SecurityContext {
    *
    * @return new security context
    */
-  def withPermissions(perms: Set[Permission]): UserSecurity
+  def withPermissions(perms: Set[Permission]): UserContext
 
   /**
    * Creates new security context by replacing existing permissions with
@@ -180,7 +174,7 @@ sealed trait UserSecurity extends SecurityContext {
    *
    * @return new security context
    */
-  def withPermissions(one: Permission, more: Permission*): UserSecurity =
+  def withPermissions(one: Permission, more: Permission*): UserContext =
     withPermissions((one +: more).toSet)
 
   /**
@@ -191,7 +185,7 @@ sealed trait UserSecurity extends SecurityContext {
    *
    * @return new security context
    */
-  def grant(perms: Set[Permission]): UserSecurity =
+  def grant(perms: Set[Permission]): UserContext =
     withPermissions(permissions ++ perms)
 
   /**
@@ -203,7 +197,7 @@ sealed trait UserSecurity extends SecurityContext {
    *
    * @return new security context
    */
-  def grant(one: Permission, more: Permission*): UserSecurity =
+  def grant(one: Permission, more: Permission*): UserContext =
     grant((one +: more).toSet)
 
   /**
@@ -214,7 +208,7 @@ sealed trait UserSecurity extends SecurityContext {
    *
    * @return new security context
    */
-  def revoke(perms: Set[Permission]): UserSecurity =
+  def revoke(perms: Set[Permission]): UserContext =
     withPermissions(permissions.diff(perms))
 
   /**
@@ -226,25 +220,25 @@ sealed trait UserSecurity extends SecurityContext {
    *
    * @return new security context
    */
-  def revoke(one: Permission, more: Permission*): UserSecurity =
+  def revoke(one: Permission, more: Permission*): UserContext =
     revoke((one +: more).toSet)
 }
 
-/** Provides `UserSecurity` factory. */
-object UserSecurity {
+/** Provides `UserContext` factory. */
+object UserContext {
   /**
-   * Creates `UserSecurity` with supplied identity.
+   * Creates `UserContext` with supplied identity.
    *
    * @param userId user identifier
    * @param groupId group identifier
    *
    * @note User and group permissions added to security context.
    */
-  def apply(userId: String, groupId: String): UserSecurity =
+  def apply(userId: String, groupId: String): UserContext =
     apply(userId, groupId, Set.empty[Permission])
 
   /**
-   * Creates `UserSecurity` with supplied identity and permissions.
+   * Creates `UserContext` with supplied identity and permissions.
    *
    * @param userId user identifier
    * @param groupId group identifier
@@ -252,15 +246,15 @@ object UserSecurity {
    *
    * @note User and group permissions are added to set of supplied permissions.
    */
-  def apply(userId: String, groupId: String, permissions: Set[Permission]): UserSecurity = {
+  def apply(userId: String, groupId: String, permissions: Set[Permission]): UserContext = {
     val uid = userId.trim()
     val gid = groupId.trim()
 
-    UserSecurityImpl(uid, gid, permissions + UserPermission(uid) + GroupPermission(gid))
+    UserContextImpl(uid, gid, permissions + UserPermission(uid) + GroupPermission(gid))
   }
 
   /**
-   * Creates `UserSecurity` with supplied identity and permissions.
+   * Creates `UserContext` with supplied identity and permissions.
    *
    * @param userId user identifier
    * @param groupId group identifier
@@ -269,27 +263,27 @@ object UserSecurity {
    *
    * @note User and group permissions are added to set of supplied permissions.
    */
-  def apply(userId: String, groupId: String, one: Permission, more: Permission*): UserSecurity =
+  def apply(userId: String, groupId: String, one: Permission, more: Permission*): UserContext =
     apply(userId, groupId, (one +: more).toSet)
 
   /**
-   * Destructures user security to its `userId`, `groupId`, and `permissions`.
+   * Destructures user context to its `userId`, `groupId`, and `permissions`.
    *
-   * @param security user security
+   * @param security user context
    */
-  def unapply(security: UserSecurity): Option[(String, String, Set[Permission])] =
+  def unapply(security: UserContext): Option[(String, String, Set[Permission])] =
     security match {
       case null => None
       case _    => Some((security.userId, security.groupId, security.permissions))
     }
 }
 
-private case class UserSecurityImpl(userId: String, groupId: String, permissions: Set[Permission]) extends UserSecurity {
+private case class UserContextImpl(userId: String, groupId: String, permissions: Set[Permission]) extends UserContext {
   def test(perm: Permission): Boolean =
     permissions.contains(perm)
 
-  def withPermissions(perms: Set[Permission]): UserSecurity =
+  def withPermissions(perms: Set[Permission]): UserContext =
     copy(permissions = perms)
 
-  override lazy val toString = s"UserSecurity($userId,$groupId,$permissions)"
+  override lazy val toString = s"UserContext($userId,$groupId,$permissions)"
 }

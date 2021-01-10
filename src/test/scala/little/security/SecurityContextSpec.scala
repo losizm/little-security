@@ -26,11 +26,11 @@ class SecurityContextSpec extends org.scalatest.flatspec.AnyFlatSpec {
   val staff  = GroupPermission("staff")
   val wheel  = GroupPermission("wheel")
 
-  val security = UserSecurity("guest", "staff", select, update)
+  val security = UserContext("guest", "staff", select, update)
   val empty = Set.empty[Permission]
 
   it should "grant permissions" in {
-    val s1 = UserSecurity("guest", "staff", select, update)
+    val s1 = UserContext("guest", "staff", select, update)
     assert(s1.test(guest))
     assert(s1.test(staff))
     assert(s1.test(select))
@@ -53,7 +53,7 @@ class SecurityContextSpec extends org.scalatest.flatspec.AnyFlatSpec {
   }
 
   it should "revoke permissions" in {
-    val s1 = UserSecurity("guest", "staff", select, update)
+    val s1 = UserContext("guest", "staff", select, update)
     assert(s1.test(guest))
     assert(s1.test(staff))
     assert(s1.test(select))

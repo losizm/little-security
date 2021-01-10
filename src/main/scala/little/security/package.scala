@@ -36,7 +36,7 @@ package little
  * could be implemented. See inline comments for notable bits of code.
  *
  * {{{
- * import little.security.{ Permission, SecurityContext, UserSecurity }
+ * import little.security.{ Permission, SecurityContext, UserContext }
  *
  * import scala.collection.concurrent.TrieMap
  *
@@ -60,7 +60,7 @@ package little
  * }
  *
  * // Create security context for user with read permission to cache
- * implicit val user = UserSecurity("losizm", "staff", Permission("cache:get"))
+ * implicit val user = UserContext("losizm", "staff", Permission("cache:get"))
  *
  * // Get cache entry
  * val classic = SecureCache.get("gang starr")
