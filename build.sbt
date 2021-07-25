@@ -1,6 +1,6 @@
 organization := "com.github.losizm"
 name         := "little-security"
-version      := "1.0.0-SNAPSHOT"
+version      := "1.0.0"
 description  := "The Scala library that adds a little security to applications"
 homepage     := Some(url("https://github.com/losizm/little-security"))
 licenses     := List("Apache License, Version 2" -> url("http://www.apache.org/licenses/LICENSE-2.0.txt"))

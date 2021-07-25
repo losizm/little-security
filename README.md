@@ -372,7 +372,7 @@ sudo { implicit security =>
 
 ## API Documentation
 
-See [scaladoc](https://losizm.github.io/little-security/latest/api/index.html)
+See [scaladoc](https://losizm.github.io/little-security/latest/api/little/security.html)
 for additional details.
 
 ## License
