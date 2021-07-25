@@ -15,7 +15,7 @@
  */
 package little.security
 
-class SecurityContextSpec extends org.scalatest.flatspec.AnyFlatSpec {
+class SecurityContextSpec extends org.scalatest.flatspec.AnyFlatSpec:
   val create = Permission("create")
   val select = Permission("select")
   val insert = Permission("insert")
@@ -237,4 +237,3 @@ class SecurityContextSpec extends org.scalatest.flatspec.AnyFlatSpec {
   it should "authorize operation for any permission" in {
     assert { RootContext.any(create, select, update, delete, guest, root, staff, wheel)(1) == 1 }
   }
-}

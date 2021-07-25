@@ -2,7 +2,7 @@
 
 The Scala library that adds a little security to applications.
 
-[![Maven Central](https://img.shields.io/maven-central/v/com.github.losizm/little-security_2.13.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22com.github.losizm%22%20AND%20a:%22little-security.12%22)
+[![Maven Central](https://img.shields.io/maven-central/v/com.github.losizm/little-security_3.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22com.github.losizm%22%20AND%20a:%22little-security_3%22)
 
 ## Table of Contents
 - [Getting Started](#Getting-Started)
@@ -20,11 +20,15 @@ The Scala library that adds a little security to applications.
 
 
 ## Getting Started
-To use **little-security**, add it to your library dependencies.
+To get started, add **little-security** to your library dependencies.
 
 ```scala
-libraryDependencies += "com.github.losizm" %% "little-security" % "0.6.0"
+libraryDependencies += "com.github.losizm" %% "little-security" % "1.0.0"
 ```
+
+_**NOTE:** Starting with version 1, **little-security** is written for Scala 3
+exclusively. See previous releases for compatibility with Scala 2.12 and Scala
+2.13._
 
 ## How It Works
 
@@ -48,7 +52,7 @@ import little.security.{ Permission, SecurityContext, UserContext }
 
 import scala.collection.concurrent.TrieMap
 
-object SecureCache {
+object SecureCache:
   // Define permissions for reading and writing cache entries
   private val getPermission = Permission("cache:get")
   private val putPermission = Permission("cache:put")
@@ -58,17 +62,16 @@ object SecureCache {
     "digable planets" -> "blowout comb"
   )
 
-  def get(key: String)(implicit security: SecurityContext): String =
+  def get(key: String)(using security: SecurityContext): String =
     // Test for read permission before getting cache entry
     security(getPermission) { cache(key) }
 
-  def put(key: String, value: String)(implicit security: SecurityContext): Unit =
+  def put(key: String, value: String)(using security: SecurityContext): Unit =
     // Test for write permission before putting cache entry
     security(putPermission) { cache += key -> value }
-}
 
-// Create security context for user with read permission to cache
-implicit val user = UserContext("losizm", "staff", Permission("cache:get"))
+// Set security context for user with read permission to cache
+given SecurityContext = UserContext("losizm", "staff", Permission("cache:get"))
 
 // Get cache entry
 val classic = SecureCache.get("gang starr")
@@ -98,24 +101,28 @@ class: It's just a factory. It constructs a permission with a specially
 formatted name using a user identifier.
 
 ```scala
+import little.security.UserPermission
+
 val userPermission = UserPermission("losizm")
 
 // Destructure permission to its user identifier
-userPermission match {
+userPermission match
   case UserPermission(userId) => println(s"uid=$userId")
-}
+  case perm                   => throw Exception(s"Unexpected permission: ${perm.name}")
 ```
 
 And `GroupPermission` constructs a permission with a specially formatted name
 using a group identifier.
 
 ```scala
+import little.security.GroupPermission
+
 val groupPermission = GroupPermission("staff")
 
 // Destructure permission to its group identifier
-groupPermission match {
+groupPermission match
   case GroupPermission(groupId) => println(s"gid=$groupId")
-}
+  case perm                     => throw Exception(s"Unexpected permission: ${perm.name}")
 ```
 
 See also [Automatic User and Group Permissions](#Automatic-User-and-Group-Permissions).
@@ -133,32 +140,31 @@ permissions.
 ```scala
 import little.security.{ Permission, SecurityContext, UserContext }
 
-object BuildManager {
+object BuildManager:
   private val buildPermission      = Permission("action=build")
   private val deployDevPermission  = Permission("action=deploy; env=dev")
   private val deployProdPermission = Permission("action=deploy; env=prod")
 
-  def build(project: String)(implicit security: SecurityContext): Unit =
+  def build(project: String)(using security: SecurityContext): Unit =
     // Test permission before building project
     security(buildPermission) {
       println(s"Build $project.")
     }
 
-  def deployToDev(project: String)(implicit security: SecurityContext): Unit =
+  def deployToDev(project: String)(using security: SecurityContext): Unit =
     // Test permission before deploying project
     security(deployDevPermission) {
       println(s"Deploy $project to dev environment.")
     }
 
-  def deployToProd(project: String)(implicit security: SecurityContext): Unit =
+  def deployToProd(project: String)(using security: SecurityContext): Unit =
     // Test permission before deploying project
     security(deployProdPermission) {
       println(s"Deploy $project to prod environment.")
     }
-}
 
-// Create user security with two permissions
-implicit val user = UserContext("ishmael", "developer",
+// Set security context for user with two permissions
+given SecurityContext = UserContext("ishmael", "developer",
   Permission("action=build"),
   Permission("action=deploy; env=dev")
 )
@@ -184,25 +190,25 @@ permissions are granted before an operation is applied.
 ```scala
 import little.security.{ Permission, SecurityContext, UserContext }
 
-object FileManager {
+object FileManager:
   private val readOnlyPermission  = Permission("file:read-only")
   private val readWritePermission = Permission("file:read-write")
   private val encryptPermission   = Permission("file:encrypt")
 
-  def read(fileName: String)(implicit security: SecurityContext): Unit =
+  def read(fileName: String)(using security: SecurityContext): Unit =
     // Get either read-only or read-write permission before performing operation
     security.any(readOnlyPermission, readWritePermission) {
       println(s"Read $fileName.")
     }
 
-  def encrypt(fileName: String)(implicit security: SecurityContext): Unit =
+  def encrypt(fileName: String)(using security: SecurityContext): Unit =
     // Get both read-write and encrypt permissions before performing operation
     security.all(readWritePermission, encryptPermission) {
       println(s"Encrypt $fileName.")
     }
-}
 
-implicit val user = UserContext("isaac", "ops", Permission("file:read-write"))
+// Set security context for read/write permission
+given SecurityContext = UserContext("isaac", "ops", Permission("file:read-write"))
 
 // Can read via read-write permission
 FileManager.read("/etc/passwd")
@@ -222,7 +228,7 @@ a security filter, as demonstrated in the following script.
 ```scala
 import little.security.{ Permission, SecurityContext, UserContext }
 
-object SecureMessages {
+object SecureMessages:
   // Define class for text message with assigned permission
   private case class Message(text: String, permission: Permission)
 
@@ -232,13 +238,12 @@ object SecureMessages {
     Message("This is a private message."  , Permission("private"))
   )
 
-  def list(implicit security: SecurityContext): Seq[String] =
+  def list(using security: SecurityContext): Seq[String] =
     // Filter messages by testing permission
     messages.filter(msg => security.test(msg.permission)).map(_.text)
-}
 
-// Create user with "public" and "protected" permissions
-implicit val user = UserContext("losizm", "staff",
+// Set security context for user with "public" and "protected" permissions
+given SecurityContext = UserContext("losizm", "staff",
   Permission("public"),
   Permission("protected")
 )
@@ -265,29 +270,30 @@ could be implemented giving a single user read/write permissions, while allowing
 other users in her group read permission only.
 
 ```scala
-import little.security._
+import little.security.*
 
 import scala.collection.concurrent.TrieMap
 
-class DocumentStore(userId: String, groupId: String) {
+class DocumentStore(userId: String, groupId: String):
   private val userPermission  = UserPermission(userId)
   private val groupPermission = GroupPermission(groupId)
 
-  private val storage = new TrieMap[String, String]
+  private val storage = TrieMap[String, String]()
 
-  def get(name: String)(implicit security: SecurityContext): String =
+  def get(name: String)(using security: SecurityContext): String =
     // Anyone in group can retrieve document
     security(groupPermission) { storage(name) }
 
-  def put(name: String, doc: String)(implicit security: SecurityContext): Unit =
+  def put(name: String, doc: String)(using security: SecurityContext): Unit =
     // Only owner can store document
     security(userPermission) { storage += name -> doc }
-}
 
 // Create security context with user and group permissions only
-implicit val owner = UserContext("lupita", "finance")
+val owner = UserContext("lupita", "finance")
+val docs  = DocumentStore(owner.userId, owner.groupId)
 
-val docs = new DocumentStore(owner.userId, owner.groupId)
+// Set security context to owner
+given SecurityContext = owner
 
 // Owner can read and write to document store
 docs.put("meeting-agenda.txt", "Increase developers' salaries")
@@ -308,7 +314,7 @@ It should be used for the purpose of effectively bypassing security checks.
 
 ```scala
 // Print all messages
-SecureMessages.list(RootContext).foreach(println)
+SecureMessages.list(using RootContext).foreach(println)
 
 (0 to 999999).foreach { _ =>
   // Create permission with randomly generated name
@@ -324,18 +330,17 @@ simulate _sudo_ functionality. It does this by defining a group permission to
 regulate user access to `RootContext`.
 
 ```scala
-import little.security._
+import little.security.*
 
-object sudo {
+object sudo:
   // Define group permission required for sudo
   private val sudoers = GroupPermission("sudoers")
 
-  def apply[T](op: SecurityContext => T)(implicit security: SecurityContext): T =
+  def apply[T](op: SecurityContext => T)(using security: SecurityContext): T =
     // Test permission before switching to root
     security(sudoers) { op(RootContext) }
-}
 
-object SecureMessages {
+object SecureMessages:
   private case class Message(text: String, permission: Permission)
 
   private val messages = Seq(
@@ -344,11 +349,11 @@ object SecureMessages {
     Message("This is a private message."  , Permission("private"))
   )
 
-  def list(implicit security: SecurityContext): Seq[String] =
+  def list(using security: SecurityContext): Seq[String] =
     messages.filter(msg => security.test(msg.permission)).map(_.text)
-}
 
-implicit val security = UserContext("losizm", "staff",
+// Set security context
+given SecurityContext = UserContext("losizm", "staff",
   Permission("public"),
   Permission("protected"),
   GroupPermission("sudoers") // Add group permission required for sudo
@@ -367,7 +372,7 @@ sudo { implicit security =>
 
 ## API Documentation
 
-See [scaladoc](https://losizm.github.io/little-security/latest/api/little/security/index.html)
+See [scaladoc](https://losizm.github.io/little-security/latest/api/index.html)
 for additional details.
 
 ## License

@@ -16,7 +16,7 @@
 package little.security
 
 /** Defines context in which permissions are granted. */
-sealed trait SecurityContext {
+sealed trait SecurityContext:
   /**
    * Tests whether given permission is granted.
    *
@@ -40,10 +40,9 @@ sealed trait SecurityContext {
    * @throws SecurityViolation if permission is not granted
    */
   def apply[T](perm: Permission)(op: => T): T =
-    test(perm) match {
+    test(perm) match
       case true  => op
       case false => throw SecurityViolation(s"Permission not granted: $perm")
-    }
 
   /**
    * Tests permissions before applying operation.
@@ -61,11 +60,9 @@ sealed trait SecurityContext {
    * @note The operation is authorized if `perms` is empty.
    */
   def any[T](perms: Set[Permission])(op: => T): T =
-    (perms.isEmpty || perms.exists(test)) match {
+    (perms.isEmpty || perms.exists(test)) match
       case true  => op
-      case false => throw SecurityViolation(s"No permission granted: ${perms.mkString(", ")}"
-      )
-    }
+      case false => throw SecurityViolation(s"No permission granted: ${perms.mkString(", ")}")
 
   /**
    * Tests permissions before applying operation.
@@ -100,10 +97,9 @@ sealed trait SecurityContext {
    * @note The operation is authorized if `perms` is empty.
    */
   def all[T](perms: Set[Permission])(op: => T): T =
-    perms.find(!test(_)) match {
+    perms.find(!test(_)) match
       case Some(perm) => throw SecurityViolation(s"Permission not granted: $perm")
       case None       => op
-    }
 
   /**
    * Tests permissions before applying operation.
@@ -121,14 +117,13 @@ sealed trait SecurityContext {
    */
   def all[T](one: Permission, more: Permission*)(op: => T): T =
     all((one +: more).toSet)(op)
-}
 
 /**
  * Defines root context in which all permissions are granted.
  *
  * @see [[UserContext]]
  */
-object RootContext extends SecurityContext {
+object RootContext extends SecurityContext:
   /**
    * @inheritdoc
    *
@@ -138,14 +133,13 @@ object RootContext extends SecurityContext {
 
   /** Gets string representation. */
   override val toString = "RootContext"
-}
 
 /**
  * Defines user context in which a set of permissions is granted.
  *
  * @see [[RootContext]]
  */
-sealed trait UserContext extends SecurityContext {
+sealed trait UserContext extends SecurityContext:
   /** Gets user identifier. */
   def userId: String
 
@@ -198,10 +192,9 @@ sealed trait UserContext extends SecurityContext {
    */
   def revoke(one: Permission, more: Permission*): UserContext =
     revoke((one +: more).toSet)
-}
 
 /** Provides `UserContext` factory. */
-object UserContext {
+object UserContext:
   /**
    * Creates `UserContext` with supplied identity.
    *
@@ -222,12 +215,11 @@ object UserContext {
    *
    * @note User and group permissions are added to set of supplied permissions.
    */
-  def apply(userId: String, groupId: String, permissions: Set[Permission]): UserContext = {
+  def apply(userId: String, groupId: String, permissions: Set[Permission]): UserContext =
     val uid = userId.trim()
     val gid = groupId.trim()
 
     UserContextImpl(uid, gid, permissions + UserPermission(uid) + GroupPermission(gid))
-  }
 
   /**
    * Creates `UserContext` with supplied identity and permissions.
@@ -248,13 +240,11 @@ object UserContext {
    * @param security user context
    */
   def unapply(security: UserContext): Option[(String, String, Set[Permission])] =
-    security match {
+    security match
       case null => None
       case _    => Some((security.userId, security.groupId, security.permissions))
-    }
-}
 
-private case class UserContextImpl(userId: String, groupId: String, permissions: Set[Permission]) extends UserContext {
+private case class UserContextImpl(userId: String, groupId: String, permissions: Set[Permission]) extends UserContext:
   permissions.collect {
     case UserPermission(uid) => require(uid == userId, s"Conflicting user permission: $uid")
   }
@@ -269,4 +259,3 @@ private case class UserContextImpl(userId: String, groupId: String, permissions:
     copy(permissions = (permissions &~ perms) + UserPermission(userId) + GroupPermission(groupId))
 
   override lazy val toString = s"UserContext($userId,$groupId,$permissions)"
-}

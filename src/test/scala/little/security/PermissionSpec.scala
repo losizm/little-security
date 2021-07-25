@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Carlos Conyers
+ * Copyright 2021 Carlos Conyers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,52 +15,46 @@
  */
 package little.security
 
-class PermissionSpec extends org.scalatest.flatspec.AnyFlatSpec {
+class PermissionSpec extends org.scalatest.flatspec.AnyFlatSpec:
   it should "create permission" in {
     assert(Permission("read").name == "read")
   }
 
   it should "destructure permission" in {
     assert(
-      Permission("write") match {
+      Permission("write") match
         case Permission(name) => name == "write"
         case _                => false
-      }
     )
 
     assert(
-      Permission("write") match {
+      Permission("write") match
         case Permission("write") => true
         case _                   => false
-      }
     )
 
     assert(
-      UserPermission("guest") match {
+      UserPermission("guest") match
         case UserPermission(userId) => userId == "guest"
         case _                      => false
-      }
     )
 
     assert(
-      UserPermission("guest") match {
+      UserPermission("guest") match
         case UserPermission("guest") => true
         case _                       => false
-      }
     )
 
     assert(
-      GroupPermission("staff") match {
+      GroupPermission("staff") match
         case GroupPermission(groupId) => groupId == "staff"
         case _                        => false
-      }
     )
 
     assert(
-      GroupPermission("staff") match {
+      GroupPermission("staff") match
         case GroupPermission("staff") => true
         case _                        => false
-      }
     )
   }
 
@@ -129,4 +123,3 @@ class PermissionSpec extends org.scalatest.flatspec.AnyFlatSpec {
     assertThrows[NullPointerException](GroupPermission(null))
     assertThrows[NullPointerException](GroupPermission.toSet("staff", "admin", null))
   }
-}

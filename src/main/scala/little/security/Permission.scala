@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Carlos Conyers
+ * Copyright 2021 Carlos Conyers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,16 @@
 package little.security
 
 /** Defines permission by name. */
-sealed trait Permission {
+sealed trait Permission:
   /** Gets name. */
   def name: String
-}
 
 /**
  * Provides `Permission` factory.
  *
  * @see [[UserPermission]], [[GroupPermission]]
  */
-object Permission {
+object Permission:
   /**
    * Creates permission with supplied name.
    *
@@ -35,10 +34,9 @@ object Permission {
    * @throws IllegalArgumentException if name is blank
    */
   def apply(name: String): Permission =
-    name.trim() match {
-      case ""    => throw new IllegalArgumentException()
+    name.trim() match
+      case ""    => throw IllegalArgumentException()
       case value => PermissionImpl(name.trim())
-    }
 
   /**
    * Creates set of permissions with supplied names.
@@ -63,11 +61,9 @@ object Permission {
    * @param perm permission
    */
   def unapply(perm: Permission): Option[String] =
-    perm match {
+    perm match
       case null => None
       case _    => Some(perm.name)
-    }
-}
 
 /**
  * Provides factory for creating user permissions.
@@ -78,7 +74,7 @@ object Permission {
  *
  * @see [[GroupPermission]]
  */
-object UserPermission {
+object UserPermission:
   private val nameRegex = """<\[\[user=\((.*)\)\]\]>""".r
 
   /**
@@ -112,11 +108,9 @@ object UserPermission {
    * @param perm permission
    */
   def unapply(perm: Permission): Option[String] =
-    perm match {
+    perm match
       case Permission(nameRegex(userId)) => Some(userId)
       case _                             => None
-    }
-}
 
 /**
  * Provides factory for creating group permissions.
@@ -127,7 +121,7 @@ object UserPermission {
  *
  * @see [[UserPermission]]
  */
-object GroupPermission {
+object GroupPermission:
   private val nameRegex = """<\[\[group=\((.*)\)\]\]>""".r
 
   /**
@@ -161,12 +155,9 @@ object GroupPermission {
    * @param perm permission
    */
   def unapply(perm: Permission): Option[String] =
-    perm match {
+    perm match
       case Permission(nameRegex(groupId)) => Some(groupId)
       case _                              => None
-    }
-}
 
-private case class PermissionImpl(name: String) extends Permission {
+private case class PermissionImpl(name: String) extends Permission:
   override lazy val toString = s"Permission($name)"
-}

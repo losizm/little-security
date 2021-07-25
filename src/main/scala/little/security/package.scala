@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Carlos Conyers
+ * Copyright 2021 Carlos Conyers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ package little
  *
  * import scala.collection.concurrent.TrieMap
  *
- * object SecureCache {
+ * object SecureCache:
  *   // Define permissions for reading and writing cache entries
  *   private val getPermission = Permission("cache:get")
  *   private val putPermission = Permission("cache:put")
@@ -50,17 +50,16 @@ package little
  *     "digable planets" -> "blowout comb"
  *   )
  *
- *   def get(key: String)(implicit security: SecurityContext): String =
+ *   def get(key: String)(using security: SecurityContext): String =
  *     // Test for read permission before getting cache entry
  *     security(getPermission) { cache(key) }
  *
- *   def put(key: String, value: String)(implicit security: SecurityContext): Unit =
+ *   def put(key: String, value: String)(using security: SecurityContext): Unit =
  *     // Test for write permission before putting cache entry
  *     security(putPermission) { cache += key -> value }
- * }
  *
  * // Create security context for user with read permission to cache
- * implicit val user = UserContext("losizm", "staff", Permission("cache:get"))
+ * given SecurityContext = UserContext("losizm", "staff", Permission("cache:get"))
  *
  * // Get cache entry
  * val classic = SecureCache.get("gang starr")
