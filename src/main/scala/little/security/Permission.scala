@@ -36,7 +36,7 @@ object Permission:
   def apply(name: String): Permission =
     name.trim() match
       case ""    => throw IllegalArgumentException()
-      case value => PermissionImpl(name.trim())
+      case value => PermissionImpl(value)
 
   /**
    * Creates set of permissions with supplied names.
@@ -75,7 +75,7 @@ object Permission:
  * @see [[GroupPermission]]
  */
 object UserPermission:
-  private val nameRegex = """<\[\[user=\((.*)\)\]\]>""".r
+  private lazy val name = PermissionName.user
 
   /**
    * Creates user permission with supplied user identifier.
@@ -83,7 +83,7 @@ object UserPermission:
    * @param userId user identifier
    */
   def apply(userId: String): Permission =
-    PermissionImpl(s"<[[user=(${userId.trim()})]]>")
+    PermissionImpl(name.format(userId))
 
   /**
    * Creates set of user permissions with supplied identifiers.
@@ -108,9 +108,7 @@ object UserPermission:
    * @param perm permission
    */
   def unapply(perm: Permission): Option[String] =
-    perm match
-      case Permission(nameRegex(userId)) => Some(userId)
-      case _                             => None
+    name.unapply(perm.name)
 
 /**
  * Provides factory for creating group permissions.
@@ -122,7 +120,7 @@ object UserPermission:
  * @see [[UserPermission]]
  */
 object GroupPermission:
-  private val nameRegex = """<\[\[group=\((.*)\)\]\]>""".r
+  private lazy val name = PermissionName.group
 
   /**
    * Creates group permission with supplied group identifier.
@@ -130,7 +128,7 @@ object GroupPermission:
    * @param groupId group identifier
    */
   def apply(groupId: String): Permission =
-    PermissionImpl(s"<[[group=(${groupId.trim()})]]>")
+    PermissionImpl(name.format(groupId))
 
   /**
    * Creates set of group permissions with supplied identifiers.
@@ -155,9 +153,7 @@ object GroupPermission:
    * @param perm permission
    */
   def unapply(perm: Permission): Option[String] =
-    perm match
-      case Permission(nameRegex(groupId)) => Some(groupId)
-      case _                              => None
+    name.unapply(perm.name)
 
 private case class PermissionImpl(name: String) extends Permission:
   override lazy val toString = s"Permission($name)"
