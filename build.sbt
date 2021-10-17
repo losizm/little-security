@@ -1,6 +1,6 @@
 organization := "com.github.losizm"
 name         := "little-security"
-version      := "1.1.0-SNAPSHOT"
+version      := "1.1.0"
 description  := "The Scala library that adds a little security to applications"
 homepage     := Some(url("https://github.com/losizm/little-security"))
 licenses     := List("Apache License, Version 2" -> url("http://www.apache.org/licenses/LICENSE-2.0.txt"))
@@ -9,7 +9,7 @@ scalaVersion := "3.0.2"
 
 scalacOptions := Seq("-deprecation", "-feature", "-new-syntax", "-Yno-experimental")
 
-Compile / doc / scalacOptions := Seq("-project-version", version.value)
+Compile / doc / scalacOptions := Seq("-project", name.value, "-project-version", version.value)
 
 libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.9" % "test"
 

@@ -23,7 +23,7 @@ The Scala library that adds a little security to applications.
 To get started, add **little-security** to your library dependencies.
 
 ```scala
-libraryDependencies += "com.github.losizm" %% "little-security" % "1.0.0"
+libraryDependencies += "com.github.losizm" %% "little-security" % "1.1.0"
 ```
 
 _**NOTE:** Starting with version 1, **little-security** is written for Scala 3
