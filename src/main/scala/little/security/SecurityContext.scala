@@ -15,7 +15,51 @@
  */
 package little.security
 
-/** Defines context in which permissions are granted. */
+/**
+ * Defines context in which permissions are granted.
+ *
+ * ### Security in Action
+ *
+ * A `SecurityContext` establishes a pattern in which a restricted operation is
+ * performed only if its required permissions are granted; otherwise, a
+ * [[SecurityViolation]] is raised.
+ *
+ * The following script demonstrates how read/write access to an in-memory cache
+ * could be implemented.
+ *
+ * {{{
+ * import little.security.{ Permission, SecurityContext, UserContext }
+ *
+ * import scala.collection.concurrent.TrieMap
+ *
+ * object SecureCache:
+ *   // Define permissions for reading and writing cache entries
+ *   private val getPermission = Permission("cache:get")
+ *   private val putPermission = Permission("cache:put")
+ *
+ *   private val cache = TrieMap[String, String](
+ *     "gang starr"      -> "step in the arena",
+ *     "digable planets" -> "blowout comb"
+ *   )
+ *
+ *   def get(key: String)(using security: SecurityContext): String =
+ *     // Test for read permission before getting cache entry
+ *     security(getPermission) { cache(key) }
+ *
+ *   def put(key: String, value: String)(using security: SecurityContext): Unit =
+ *     // Test for write permission before putting cache entry
+ *     security(putPermission) { cache += key -> value }
+ *
+ * // Create security context for user with read permission to cache
+ * given SecurityContext = UserContext("losizm", "staff", Permission("cache:get"))
+ *
+ * // Get cache entry
+ * val classic = SecureCache.get("gang starr")
+ *
+ * // Throw SecurityViolation because user lacks write permission
+ * SecureCache.put("sucker mc", classic)
+ * }}}
+ */
 sealed trait SecurityContext:
   /**
    * Tests whether given permission is granted.

@@ -39,7 +39,7 @@ A `Permission` is defined with a given name, and one or more permissions can be
 applied to a restricted operation.
 
 A `SecurityContext` establishes a pattern in which a restricted operation is
-performed only if its required permissions are granted. Otherwise, a
+performed only if its required permissions are granted; otherwise, a
 `SecurityViolation` is raised.
 
 ### Security in Action
