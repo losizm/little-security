@@ -1,8 +1,10 @@
 # little-security
 
+[![Maven Central](https://img.shields.io/maven-central/v/com.github.losizm/little-security_3.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22com.github.losizm%22%20AND%20a:%22little-security_3%22)
+
 The Scala library that adds a little security to applications.
 
-[![Maven Central](https://img.shields.io/maven-central/v/com.github.losizm/little-security_3.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22com.github.losizm%22%20AND%20a:%22little-security_3%22)
+_This project is archived and read-only. See [Ergo](https://github.com/losizm/ergo) for active fork._
 
 ## Table of Contents
 - [Getting Started](#Getting-Started)
